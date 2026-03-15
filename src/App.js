@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
-
   const jobStats = {
     new: 3,
     wip: 5,
@@ -21,27 +19,27 @@ function App() {
       </header>
 
       <div className="dashboard">
-        <div className="stat-card new" onClick={() => setCurrentPage('new')}>
+        <div className="stat-card new">
           <span className="count">{jobStats.new}</span>
           <span className="label">New Jobs</span>
         </div>
-        <div className="stat-card wip" onClick={() => setCurrentPage('wip')}>
+        <div className="stat-card wip">
           <span className="count">{jobStats.wip}</span>
           <span className="label">Work In Progress</span>
         </div>
-        <div className="stat-card quoting" onClick={() => setCurrentPage('quoting')}>
+        <div className="stat-card quoting">
           <span className="count">{jobStats.quoting}</span>
           <span className="label">Quoting</span>
         </div>
-        <div className="stat-card completed" onClick={() => setCurrentPage('completed')}>
+        <div className="stat-card completed">
           <span className="count">{jobStats.completed}</span>
           <span className="label">Completed</span>
         </div>
-        <div className="stat-card testing" onClick={() => setCurrentPage('testing')}>
+        <div className="stat-card testing">
           <span className="count">{jobStats.testing}</span>
           <span className="label">Final Testing</span>
         </div>
-        <div className="stat-card invoice" onClick={() => setCurrentPage('invoice')}>
+        <div className="stat-card invoice">
           <span className="count">{jobStats.invoice}</span>
           <span className="label">Invoice & Collection</span>
         </div>
@@ -50,6 +48,7 @@ function App() {
       <div className="actions">
         <button className="btn-primary">+ New Job Card</button>
       </div>
+
     </div>
   );
 }
