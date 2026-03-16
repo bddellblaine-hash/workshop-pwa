@@ -836,4 +836,152 @@ body {
   padding: 12px;
   color: #e94560;
   font-size: 14px;
+}.invoice-screen { padding: 16px; background: #1a1a2e; min-height: 100vh; }
+
+.invoice-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.inv-action-btn {
+  padding: 10px 16px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.inv-action-btn.whatsapp { background: #25d366; border-color: #25d366; color: white; }
+
+.invoice-doc {
+  background: white;
+  color: #1a1a1a;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.inv-company { display: flex; gap: 12px; align-items: flex-start; }
+.inv-company p { font-size: 13px; color: #555; margin-top: 2px; }
+.inv-company-name { font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px; }
+.inv-logo { width: 60px; height: 60px; object-fit: contain; }
+
+.inv-title-block { text-align: right; }
+.inv-title { font-size: 28px; font-weight: bold; color: #e94560; margin-bottom: 8px; }
+
+.inv-meta-table { font-size: 13px; }
+.inv-meta-table td { padding: 2px 8px; }
+.inv-meta-table td:first-child { color: #888; }
+
+.inv-divider { border: none; border-top: 2px solid #eee; margin: 16px 0; }
+
+.inv-client-section { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.inv-client, .inv-job-info { flex: 1; min-width: 200px; }
+.inv-section-label { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #888; letter-spacing: 1px; margin-bottom: 6px; }
+.inv-client-name { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.inv-client p, .inv-job-info p { font-size: 13px; color: #444; margin-bottom: 2px; }
+
+.inv-header-text { font-size: 13px; color: #555; margin-bottom: 12px; font-style: italic; }
+
+.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+.inv-table thead { background: #f5f5f5; }
+.inv-th-desc, .inv-th-qty, .inv-th-price, .inv-th-total {
+  padding: 10px 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #888;
+  border-bottom: 2px solid #eee;
+  font-weight: bold;
+}
+.inv-th-desc { text-align: left; }
+.inv-th-qty, .inv-th-price, .inv-th-total { text-align: right; }
+
+.inv-row td { padding: 10px 8px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+.inv-center { text-align: center; }
+.inv-right { text-align: right; }
+
+.inv-totals {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 0 0 8px 8px;
+  margin-bottom: 16px;
+}
+
+.inv-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 4px 0;
+  color: #555;
+}
+
+.inv-total-row.grand {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a;
+  border-top: 2px solid #eee;
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+.inv-bank { margin-bottom: 12px; }
+.inv-bank-grid { display: grid; grid-template-columns: 120px 1fr; gap: 4px 8px; font-size: 13px; margin-top: 6px; }
+.inv-bank-grid span:nth-child(odd) { color: #888; }
+
+.inv-terms { margin-bottom: 12px; }
+.inv-terms p { font-size: 12px; color: #666; margin-top: 6px; }
+
+.inv-footer { text-align: center; padding: 12px; background: #f5f5f5; border-radius: 8px; font-size: 13px; color: #888; }
+
+.inv-list-header {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 70px 60px;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #0f3460;
+  border-radius: 8px 8px 0 0;
+  font-size: 11px;
+  font-weight: bold;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.inv-item-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 70px 60px;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  align-items: center;
+}
+
+.inv-item-info { display: flex; flex-direction: column; gap: 2px; }
+.inv-item-name { font-size: 14px; font-weight: bold; }
+.inv-item-meta { font-size: 11px; color: #888; }
+.inv-cost { font-size: 13px; color: #888; }
+.inv-price { font-size: 13px; color: #0a9396; font-weight: bold; }
+.inv-markup { font-size: 12px; color: #ee9b00; }
+.inv-actions { display: flex; gap: 6px; }
+.inv-edit-btn, .inv-delete-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
+
+@media print {
+  .no-print { display: none !important; }
+  .invoice-screen { padding: 0; background: white; }
+  .invoice-doc { box-shadow: none; border-radius: 0; }
+  body { background: white; }
 }
