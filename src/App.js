@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import { db, uploadImage } from './supabase';
 import { askClaude } from './claude';
-import { db, uploadImage } from './supabase';
-import { askClaude, analyzeSlipImage } from './claude';
 
 const INITIAL_SETTINGS = {
   labourRateVehicle: 695,
