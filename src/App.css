@@ -984,4 +984,64 @@ body {
   .invoice-screen { padding: 0; background: white; }
   .invoice-doc { box-shadow: none; border-radius: 0; }
   body { background: white; }
+}.inv-summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
 }
+
+.inv-summary-card {
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inv-summary-card.unpaid { background: #2a0a0a; border: 1px solid #e94560; }
+.inv-summary-card.paid { background: #0a2a1f; border: 1px solid #2d6a4f; }
+.inv-summary-label { font-size: 12px; color: #aaa; }
+.inv-summary-amount { font-size: 20px; font-weight: bold; }
+.inv-summary-card.unpaid .inv-summary-amount { color: #e94560; }
+.inv-summary-card.paid .inv-summary-amount { color: #0a9396; }
+
+.doc-card {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #0f3460;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doc-card-top { display: flex; justify-content: space-between; align-items: center; }
+.doc-number { font-size: 14px; font-weight: bold; color: #e94560; }
+.doc-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.doc-status.paid { background: #2d6a4f; color: white; }
+.doc-status.unpaid { background: #e94560; color: white; }
+
+.doc-card-mid { display: flex; justify-content: space-between; align-items: center; }
+.doc-client { font-size: 15px; font-weight: bold; }
+.doc-total { font-size: 16px; font-weight: bold; color: #0a9396; }
+
+.doc-card-bot { display: flex; flex-direction: column; gap: 2px; }
+.doc-meta { font-size: 12px; color: #888; }
+.doc-desc { font-size: 13px; color: #ccc; }
+
+.doc-card-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+
+.doc-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.paid-btn { background: #2d6a4f; color: white; }
+.wa-btn { background: #25d366; color: white; }
+.decline-btn { background: #e94560; color: white; }
+.convert-btn { background: #533483; color: white; }

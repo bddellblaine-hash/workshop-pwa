@@ -100,6 +100,18 @@ const SAMPLE_JOBS = [
   { id: 6, number: 'JB11157', client: 'Lisa Taylor', phone: '0834445566', email: '', description: 'Starter motor', jobType: 'GENERATOR', vehicleMake: '', vehicleModel: '', registration: '', start: '10 Mar 2026 09:00', due: '17 Mar 2026', status: 'invoice', technician: 'Technician 2', notes: '', photos: [], slips: [], history: [{ time: '10 Mar 2026 09:00', note: 'Job booked' }], parts: [{ id: 1, name: 'Recoil Assembly', price: 180, fromInventory: true }], labourHours: 2, sundriesAmount: 115 },
 ];
 
+const SAMPLE_INVOICES = [
+  { id: 1, number: 'INV11152', jobNumber: 'JB11152', client: 'John Wick', phone: '0821234567', date: '16 Mar 2026', total: 1815, paid: false, jobType: 'CAR/BAKKIE', description: 'Engine misfire on startup' },
+  { id: 2, number: 'INV11155', jobNumber: 'JB11155', client: 'Sarah Brown', phone: '0851112233', date: '13 Mar 2026', total: 695, paid: true, jobType: 'CHAINSAW/POLE SAW', description: 'Full service' },
+  { id: 3, number: 'INV11157', jobNumber: 'JB11157', client: 'Lisa Taylor', phone: '0834445566', date: '15 Mar 2026', total: 1525, paid: false, jobType: 'GENERATOR', description: 'Starter motor' },
+];
+
+const SAMPLE_QUOTES = [
+  { id: 1, number: 'QT1001', jobNumber: 'JB11154', client: 'Mike Jones', phone: '0849876543', date: '16 Mar 2026', total: 1147.50, status: 'pending', jobType: 'LAWNMOWER', description: 'Not starting — quote first' },
+  { id: 2, number: 'QT1002', jobNumber: 'JB11153', client: 'Peter Smith', phone: '0837654321', date: '15 Mar 2026', total: 990, status: 'accepted', jobType: 'CAR/BAKKIE', description: 'Service and brake pads' },
+  { id: 3, number: 'QT1003', jobNumber: 'JB11156', client: 'Dave Wilson', phone: '0829998877', date: '11 Mar 2026', total: 665, status: 'declined', jobType: 'BRUSHCUTTER/WEEDEATER', description: 'Carb clean' },
+];
+
 function addWorkingDays(date, days) {
   let count = 0;
   let current = new Date(date);
@@ -163,6 +175,179 @@ function CollapsibleSection({ title, children, defaultOpen = false }) {
         <button className="toggle-btn">{open ? '▲' : '▼'}</button>
       </div>
       {open && <div className="settings-section-body">{children}</div>}
+    </div>
+  );
+}
+
+function InvoicesScreen({ setPage, invoices, setInvoices, settings }) {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+
+  const filtered = invoices.filter(inv => {
+    const matchSearch = inv.client.toLowerCase().includes(search.toLowerCase()) || inv.number.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'all' || (filter === 'paid' && inv.paid) || (filter === 'unpaid' && !inv.paid);
+    return matchSearch && matchFilter;
+  });
+
+  const markPaid = (id) => setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, paid: true } : inv));
+
+  const sendWhatsApp = (inv) => {
+    const msg = `Hi ${inv.client}, your invoice ${inv.number} of R${inv.total.toFixed(2)} is ${inv.paid ? 'marked as paid' : 'outstanding'}. Thank you — ${settings.companyName}`;
+    const phone = inv.phone.replace(/\D/g, '');
+    window.open(`https://wa.me/27${phone.slice(1)}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const totalUnpaid = invoices.filter(i => !i.paid).reduce((sum, i) => sum + i.total, 0);
+  const totalPaid = invoices.filter(i => i.paid).reduce((sum, i) => sum + i.total, 0);
+
+  return (
+    <div className="jobs-screen">
+      <div className="jobs-header">
+        <button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button>
+        <h2>Invoices</h2>
+        <span className="job-count">{filtered.length} invoices</span>
+      </div>
+
+      <div className="inv-summary-row">
+        <div className="inv-summary-card unpaid">
+          <span className="inv-summary-label">Outstanding</span>
+          <span className="inv-summary-amount">R{totalUnpaid.toFixed(2)}</span>
+        </div>
+        <div className="inv-summary-card paid">
+          <span className="inv-summary-label">Collected</span>
+          <span className="inv-summary-amount">R{totalPaid.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div className="search-row">
+        <input className="search-input" placeholder="🔍 Search client or invoice number..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
+      <div className="filter-options" style={{ marginBottom: '12px' }}>
+        {['all', 'unpaid', 'paid'].map(f => (
+          <button key={f} className={`filter-option ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+            {f === 'all' ? 'All' : f === 'unpaid' ? '⚠ Outstanding' : '✅ Paid'}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {filtered.length === 0 && <p className="no-jobs">No invoices found</p>}
+        {filtered.map(inv => (
+          <div key={inv.id} className="doc-card">
+            <div className="doc-card-top">
+              <span className="doc-number">{inv.number}</span>
+              <span className={`doc-status ${inv.paid ? 'paid' : 'unpaid'}`}>{inv.paid ? '✅ Paid' : '⚠ Outstanding'}</span>
+            </div>
+            <div className="doc-card-mid">
+              <span className="doc-client">{inv.client}</span>
+              <span className="doc-total">R{inv.total.toFixed(2)}</span>
+            </div>
+            <div className="doc-card-bot">
+              <span className="doc-meta">{inv.jobType} · {inv.date}</span>
+              <span className="doc-desc">{inv.description}</span>
+            </div>
+            <div className="doc-card-actions">
+              {!inv.paid && <button className="doc-btn paid-btn" onClick={() => markPaid(inv.id)}>✅ Mark Paid</button>}
+              <button className="doc-btn wa-btn" onClick={() => sendWhatsApp(inv)}>💬 WhatsApp</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function QuotesScreen({ setPage, quotes, setQuotes, setInvoices, invoices, settings }) {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+
+  const filtered = quotes.filter(q => {
+    const matchSearch = q.client.toLowerCase().includes(search.toLowerCase()) || q.number.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'all' || q.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const updateStatus = (id, status) => setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+
+  const convertToInvoice = (quote) => {
+    const newInvoice = {
+      id: Date.now(),
+      number: `INV${settings.invoiceNextNumber + invoices.length}`,
+      jobNumber: quote.jobNumber,
+      client: quote.client,
+      phone: quote.phone,
+      date: new Date().toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }),
+      total: quote.total,
+      paid: false,
+      jobType: quote.jobType,
+      description: quote.description,
+    };
+    setInvoices(prev => [...prev, newInvoice]);
+    setQuotes(prev => prev.map(q => q.id === quote.id ? { ...q, status: 'accepted' } : q));
+    alert(`Quote ${quote.number} converted to Invoice ${newInvoice.number}`);
+  };
+
+  const sendWhatsApp = (q) => {
+    const msg = `Hi ${q.client}, please find your quotation ${q.number} of R${q.total.toFixed(2)} from ${settings.companyName}.\n\nThis quote is valid for ${settings.quoteValidity}.\n\n${settings.paymentTerms}`;
+    const phone = q.phone.replace(/\D/g, '');
+    window.open(`https://wa.me/27${phone.slice(1)}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const statusColor = { pending: '#ee9b00', accepted: '#2d6a4f', declined: '#e94560' };
+  const statusLabel = { pending: '⏳ Pending', accepted: '✅ Accepted', declined: '❌ Declined' };
+
+  return (
+    <div className="jobs-screen">
+      <div className="jobs-header">
+        <button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button>
+        <h2>Quotes</h2>
+        <span className="job-count">{filtered.length} quotes</span>
+      </div>
+
+      <div className="search-row">
+        <input className="search-input" placeholder="🔍 Search client or quote number..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
+      <div className="filter-options" style={{ marginBottom: '12px' }}>
+        {['all', 'pending', 'accepted', 'declined'].map(f => (
+          <button key={f} className={`filter-option ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+            {f === 'all' ? 'All' : statusLabel[f]}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {filtered.length === 0 && <p className="no-jobs">No quotes found</p>}
+        {filtered.map(q => (
+          <div key={q.id} className="doc-card">
+            <div className="doc-card-top">
+              <span className="doc-number">{q.number}</span>
+              <span className="doc-status" style={{ background: statusColor[q.status] }}>{statusLabel[q.status]}</span>
+            </div>
+            <div className="doc-card-mid">
+              <span className="doc-client">{q.client}</span>
+              <span className="doc-total">R{q.total.toFixed(2)}</span>
+            </div>
+            <div className="doc-card-bot">
+              <span className="doc-meta">{q.jobType} · {q.date}</span>
+              <span className="doc-desc">{q.description}</span>
+            </div>
+            <div className="doc-card-actions">
+              {q.status === 'pending' && (
+                <>
+                  <button className="doc-btn paid-btn" onClick={() => updateStatus(q.id, 'accepted')}>✅ Accept</button>
+                  <button className="doc-btn decline-btn" onClick={() => updateStatus(q.id, 'declined')}>❌ Decline</button>
+                </>
+              )}
+              {q.status === 'accepted' && (
+                <button className="doc-btn convert-btn" onClick={() => convertToInvoice(q)}>🧾 Convert to Invoice</button>
+              )}
+              <button className="doc-btn wa-btn" onClick={() => sendWhatsApp(q)}>💬 WhatsApp</button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1116,6 +1301,8 @@ function App() {
   const [quickParts, setQuickParts] = useState(INITIAL_QUICK_PARTS);
   const [clients, setClients] = useState(INITIAL_CLIENTS);
   const [inventory, setInventory] = useState(SAMPLE_INVENTORY);
+  const [invoices, setInvoices] = useState(SAMPLE_INVOICES);
+  const [quotes, setQuotes] = useState(SAMPLE_QUOTES);
 
   return (
     <div className="app">
@@ -1132,9 +1319,9 @@ function App() {
       {page === 'clients' && <ClientsList setPage={setPage} clients={clients} setClients={setClients} setSelectedClient={setSelectedClient} />}
       {page === 'clientdetail' && selectedClient && <ClientDetail setPage={setPage} client={selectedClient} setClients={setClients} />}
       {page === 'inventory' && <InventoryScreen setPage={setPage} inventory={inventory} setInventory={setInventory} />}
+      {page === 'invoices' && <InvoicesScreen setPage={setPage} invoices={invoices} setInvoices={setInvoices} settings={settings} />}
+      {page === 'quotes' && <QuotesScreen setPage={setPage} quotes={quotes} setQuotes={setQuotes} setInvoices={setInvoices} invoices={invoices} settings={settings} />}
       {page === 'settings' && <SettingsScreen setPage={setPage} settings={settings} setSettings={setSettings} jobTypes={jobTypes} setJobTypes={setJobTypes} technicians={technicians} setTechnicians={setTechnicians} problems={problems} setProblems={setProblems} quickParts={quickParts} setQuickParts={setQuickParts} />}
-      {page === 'quotes' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Quotes — Coming Soon</h2></div>}
-      {page === 'invoices' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Invoice History — Coming Soon</h2></div>}
     </div>
   );
 }
