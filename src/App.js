@@ -173,7 +173,6 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
   const isQuote = type === 'quote';
   const docNumber = isQuote ? `${settings.quotePrefix}${settings.quoteNextNumber}` : `${settings.invoicePrefix}${settings.invoiceNextNumber}`;
   const title = isQuote ? 'QUOTATION' : 'INVOICE';
-
   const labourTotal = job.labourHours * labourRate;
   const partsTotal = job.parts.reduce((sum, p) => sum + p.price, 0);
   const grandTotal = labourTotal + job.sundriesAmount + partsTotal;
@@ -194,7 +193,6 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
         <button className="inv-action-btn" onClick={handlePrint}>🖨 Print / PDF</button>
         <button className="inv-action-btn whatsapp" onClick={handleWhatsApp}>💬 WhatsApp</button>
       </div>
-
       <div className="invoice-doc">
         <div className="inv-header">
           <div className="inv-company">
@@ -218,9 +216,7 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
             </table>
           </div>
         </div>
-
         <div className="inv-divider" />
-
         <div className="inv-client-section">
           <div className="inv-client">
             <p className="inv-section-label">BILL TO</p>
@@ -236,11 +232,8 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
             <p><strong>Description:</strong> {job.description}</p>
           </div>
         </div>
-
         <div className="inv-divider" />
-
         {settings.invoiceHeaderText && <p className="inv-header-text">{settings.invoiceHeaderText}</p>}
-
         <table className="inv-table">
           <thead>
             <tr>
@@ -273,14 +266,11 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
             ))}
           </tbody>
         </table>
-
         <div className="inv-totals">
           <div className="inv-total-row"><span>Subtotal</span><span>R{grandTotal.toFixed(2)}</span></div>
           <div className="inv-total-row grand"><span>TOTAL</span><span>R{grandTotal.toFixed(2)}</span></div>
         </div>
-
         <div className="inv-divider" />
-
         {(settings.bankName || settings.bankAccount) && (
           <div className="inv-bank">
             <p className="inv-section-label">BANKING DETAILS</p>
@@ -292,19 +282,12 @@ function InvoiceView({ setPage, job, settings, type = 'invoice' }) {
             </div>
           </div>
         )}
-
         <div className="inv-divider" />
-
         <div className="inv-terms">
           <p className="inv-section-label">TERMS & CONDITIONS</p>
           <p>{settings.paymentTerms}</p>
         </div>
-
-        {settings.invoiceFooterText && (
-          <div className="inv-footer">
-            <p>{settings.invoiceFooterText}</p>
-          </div>
-        )}
+        {settings.invoiceFooterText && <div className="inv-footer"><p>{settings.invoiceFooterText}</p></div>}
       </div>
     </div>
   );
@@ -315,7 +298,6 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState({ name: '', costPrice: '', sellingPrice: '', category: '', barcode: '', supplier: '' });
-  const [showScanner, setShowScanner] = useState(false);
   const barcodeRef = useRef(null);
 
   const filtered = inventory.filter(i =>
@@ -343,7 +325,6 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
   };
 
   const handleDelete = (id) => setInventory(prev => prev.filter(i => i.id !== id));
-
   const markup = (cost, sell) => cost > 0 ? Math.round(((sell - cost) / cost) * 100) : 0;
 
   return (
@@ -353,12 +334,10 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
         <h2>Inventory</h2>
         <span className="job-count">{filtered.length} items</span>
       </div>
-
       <div className="search-row">
         <input className="search-input" placeholder="🔍 Search name, category, barcode..." value={search} onChange={e => setSearch(e.target.value)} />
         <button className="filter-btn" onClick={() => { setShowAdd(!showAdd); setEditItem(null); setForm({ name: '', costPrice: '', sellingPrice: '', category: '', barcode: '', supplier: '' }); }}>+ Add</button>
       </div>
-
       {showAdd && (
         <div className="form-section" style={{ marginBottom: '12px' }}>
           <h3 className="section-title">{editItem ? 'Edit Item' : 'New Item'}</h3>
@@ -377,9 +356,7 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
           </div>
           <div className="field"><input className="form-input" placeholder="Supplier Name" value={form.supplier} onChange={e => setForm(p => ({ ...p, supplier: e.target.value }))} /></div>
           {form.costPrice && form.sellingPrice && (
-            <p className="field-hint" style={{ marginBottom: '8px' }}>
-              Markup: {markup(parseFloat(form.costPrice), parseFloat(form.sellingPrice))}%
-            </p>
+            <p className="field-hint" style={{ marginBottom: '8px' }}>Markup: {markup(parseFloat(form.costPrice), parseFloat(form.sellingPrice))}%</p>
           )}
           <div className="add-tag-row">
             <button className="btn-primary" onClick={handleSave}>{editItem ? 'Update Item' : 'Save Item'}</button>
@@ -387,15 +364,9 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
           </div>
         </div>
       )}
-
       <div className="inv-list-header">
-        <span>Item</span>
-        <span>Cost</span>
-        <span>Price</span>
-        <span>Markup</span>
-        <span></span>
+        <span>Item</span><span>Cost</span><span>Price</span><span>Markup</span><span></span>
       </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {filtered.length === 0 && <p className="no-jobs">No items found</p>}
         {filtered.map(item => (
@@ -672,7 +643,6 @@ function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvo
               </div>
             ))}
           </div>
-
           <div className="parts-total"><span>Grand Total</span><span>R{grandTotal.toFixed(2)}</span></div>
         </div>
 
@@ -1085,7 +1055,6 @@ function SettingsScreen({ setPage, settings, setSettings, jobTypes, setJobTypes,
             <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
           </div>
         </CollapsibleSection>
-
         <CollapsibleSection title="💰 Labour & Sundries Rates">
           <div className="settings-row"><label className="settings-label">Vehicle Labour Rate (R/hr)</label><input className="settings-input" type="number" value={settings.labourRateVehicle} onChange={e => updateSetting('labourRateVehicle', parseFloat(e.target.value))} /></div>
           <div className="settings-row"><label className="settings-label">Other Labour Rate (R/hr)</label><input className="settings-input" type="number" value={settings.labourRateOther} onChange={e => updateSetting('labourRateOther', parseFloat(e.target.value))} /></div>
@@ -1093,7 +1062,6 @@ function SettingsScreen({ setPage, settings, setSettings, jobTypes, setJobTypes,
           <div className="settings-row"><label className="settings-label">Machine Sundries (R)</label><input className="settings-input" type="number" value={settings.sundriesOther} onChange={e => updateSetting('sundriesOther', parseFloat(e.target.value))} /></div>
           <div className="settings-row"><label className="settings-label">Default Due Days</label><input className="settings-input" type="number" value={settings.defaultDueDays} onChange={e => updateSetting('defaultDueDays', parseInt(e.target.value))} /></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="🧾 Invoice & Quote Layout">
           <div className="settings-row"><label className="settings-label">Invoice Prefix</label><input className="settings-input" value={settings.invoicePrefix} onChange={e => updateSetting('invoicePrefix', e.target.value)} /></div>
           <div className="settings-row"><label className="settings-label">Next Invoice Number</label><input className="settings-input" type="number" value={settings.invoiceNextNumber} onChange={e => updateSetting('invoiceNextNumber', parseInt(e.target.value))} /></div>
@@ -1104,29 +1072,24 @@ function SettingsScreen({ setPage, settings, setSettings, jobTypes, setJobTypes,
           <div className="field"><label className="settings-label">Invoice Header Text</label><input className="form-input" value={settings.invoiceHeaderText} onChange={e => updateSetting('invoiceHeaderText', e.target.value)} placeholder="Optional..." /></div>
           <div className="field"><label className="settings-label">Invoice Footer Text</label><input className="form-input" value={settings.invoiceFooterText} onChange={e => updateSetting('invoiceFooterText', e.target.value)} placeholder="Optional..." /></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="🏦 Bank Details">
           <div className="field"><label className="settings-label">Bank Name</label><input className="form-input" value={settings.bankName} onChange={e => updateSetting('bankName', e.target.value)} /></div>
           <div className="field"><label className="settings-label">Account Number</label><input className="form-input" value={settings.bankAccount} onChange={e => updateSetting('bankAccount', e.target.value)} /></div>
           <div className="field"><label className="settings-label">Branch Code</label><input className="form-input" value={settings.bankBranch} onChange={e => updateSetting('bankBranch', e.target.value)} /></div>
           <div className="field"><label className="settings-label">Reference Format</label><input className="form-input" value={settings.bankReference} onChange={e => updateSetting('bankReference', e.target.value)} /></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="👷 Technicians">
           <div className="tags-list">{technicians.map((t, i) => <div key={i} className="tag-item"><span>{t}</span><button className="tag-remove" onClick={() => setTechnicians(prev => prev.filter((_, idx) => idx !== i))}>✕</button></div>)}</div>
           <div className="add-tag-row"><input className="form-input" placeholder="Add technician..." value={newTechnician} onChange={e => setNewTechnician(e.target.value)} /><button className="add-part-btn" onClick={() => { if (newTechnician.trim()) { setTechnicians(prev => [...prev, newTechnician.trim()]); setNewTechnician(''); } }}>+</button></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="🔧 Job Types">
           <div className="tags-list">{jobTypes.map((t, i) => <div key={i} className="tag-item"><span>{t}</span><button className="tag-remove" onClick={() => setJobTypes(prev => prev.filter((_, idx) => idx !== i))}>✕</button></div>)}</div>
           <div className="add-tag-row"><input className="form-input" placeholder="Add job type..." value={newJobType} onChange={e => setNewJobType(e.target.value)} /><button className="add-part-btn" onClick={() => { if (newJobType.trim()) { setJobTypes(prev => [...prev, newJobType.trim().toUpperCase()]); setNewJobType(''); } }}>+</button></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="📋 Problem Checklist">
           <div className="tags-list">{problems.map((p, i) => <div key={i} className="tag-item"><span>{p}</span><button className="tag-remove" onClick={() => setProblems(prev => prev.filter((_, idx) => idx !== i))}>✕</button></div>)}</div>
           <div className="add-tag-row"><input className="form-input" placeholder="Add problem..." value={newProblem} onChange={e => setNewProblem(e.target.value)} /><button className="add-part-btn" onClick={() => { if (newProblem.trim()) { setProblems(prev => [...prev, newProblem.trim()]); setNewProblem(''); } }}>+</button></div>
         </CollapsibleSection>
-
         <CollapsibleSection title="⚡ Quick Parts Checklist">
           <div className="tags-list">{quickParts.map((p, i) => <div key={i} className="tag-item"><span>{p.name} — R{p.price}</span><button className="tag-remove" onClick={() => setQuickParts(prev => prev.filter((_, idx) => idx !== i))}>✕</button></div>)}</div>
           <div className="add-tag-row">
@@ -1135,7 +1098,6 @@ function SettingsScreen({ setPage, settings, setSettings, jobTypes, setJobTypes,
             <button className="add-part-btn" onClick={() => { if (newQuickPartName.trim() && newQuickPartPrice) { setQuickParts(prev => [...prev, { name: newQuickPartName.trim(), price: parseFloat(newQuickPartPrice) }]); setNewQuickPartName(''); setNewQuickPartPrice(''); } }}>+</button>
           </div>
         </CollapsibleSection>
-
         <button className="btn-primary" onClick={handleSave}>{saved ? '✅ Saved!' : 'Save Settings'}</button>
       </div>
     </div>
