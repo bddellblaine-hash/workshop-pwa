@@ -820,4 +820,20 @@ body {
   border-radius: 8px;
   margin-bottom: 8px;
   background: #1a1a2e;
+}.terms-signed-banner {
+  background: #0a2a1f;
+  border: 1px solid #2d6a4f;
+  border-radius: 8px;
+  padding: 12px;
+  color: #0a9396;
+  font-size: 14px;
+}
+
+.terms-unsigned-banner {
+  background: #2a0a0a;
+  border: 1px solid #e94560;
+  border-radius: 8px;
+  padding: 12px;
+  color: #e94560;
+  font-size: 14px;
 }
