@@ -1,5 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
+import { db, uploadImage } from './supabase';
+import { askClaude } from './claude';
+import { db, uploadImage } from './supabase';
+import { askClaude, analyzeSlipImage } from './claude';
 
 const INITIAL_SETTINGS = {
   labourRateVehicle: 695,
@@ -592,13 +596,13 @@ function Dashboard({ setPage }) {
   );
 }
 
-function JobsList({ setPage, setSelectedJob }) {
+function JobsList({ setPage, setSelectedJob, jobs }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [showFilter, setShowFilter] = useState(false);
   const [selectedJobs, setSelectedJobs] = useState([]);
 
-  const filtered = SAMPLE_JOBS.filter(job => {
+  const filtered = (jobs || []).filter(job => {
     const matchSearch = job.client.toLowerCase().includes(search.toLowerCase()) || job.description.toLowerCase().includes(search.toLowerCase()) || job.number.toLowerCase().includes(search.toLowerCase()) || job.jobType.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'all' || job.status === filter;
     return matchSearch && matchFilter;
@@ -695,10 +699,16 @@ function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvo
   const handleAIVoiceResult = (transcript) => setAiInput(transcript);
   const { listening: aiListening, startListening: startAIListening } = useVoice(handleAIVoiceResult);
 
-  const sendAIMessage = () => {
+  const sendAIMessage = async () => {
     if (!aiInput.trim()) return;
-    setAiMessages(prev => [...prev, { role: 'user', text: aiInput }, { role: 'assistant', text: 'Placeholder response for ' + job.jobType + '. Claude API coming soon.' }]);
+    const userMsg = { role: 'user', text: aiInput };
+    setAiMessages(prev => [...prev, userMsg, { role: 'assistant', text: '...' }]);
     setAiInput('');
+    const response = await askClaude(
+      [{ role: 'user', content: aiInput }],
+      `You are a repair technician assistant. The current job is a ${job.jobType} with the problem: ${job.description}. Give practical repair advice.`
+    );
+    setAiMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, text: response } : m));
   };
 
   const openInvoice = (type) => {
@@ -1299,10 +1309,70 @@ function App() {
   const [technicians, setTechnicians] = useState(DEFAULT_TECHNICIANS);
   const [problems, setProblems] = useState(DEFAULT_PROBLEMS);
   const [quickParts, setQuickParts] = useState(INITIAL_QUICK_PARTS);
-  const [clients, setClients] = useState(INITIAL_CLIENTS);
-  const [inventory, setInventory] = useState(SAMPLE_INVENTORY);
-  const [invoices, setInvoices] = useState(SAMPLE_INVOICES);
-  const [quotes, setQuotes] = useState(SAMPLE_QUOTES);
+  const [clients, setClients] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [quotes, setQuotes] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { loadAllData(); }, []);
+
+  const loadAllData = async () => {
+    try {
+      const [clientsData, jobsData, inventoryData, invoicesData, quotesData] = await Promise.all([
+        db.getClients(), db.getJobs(), db.getInventory(), db.getInvoices(), db.getQuotes(),
+      ]);
+      setClients(clientsData.map(c => ({
+        id: c.id, name: c.name, phone: c.phone, email: c.email,
+        address: c.address, notes: c.notes, termsSigned: c.terms_signed,
+        termsDate: c.terms_date, jobHistory: [],
+      })));
+      setJobs(jobsData.map(j => ({
+        id: j.id, number: j.number, client: j.client_name, phone: j.phone,
+        email: j.email, description: j.description, jobType: j.job_type,
+        vehicleMake: j.vehicle_make, vehicleModel: j.vehicle_model,
+        registration: j.registration, status: j.status, technician: j.technician,
+        notes: j.notes, labourHours: j.labour_hours, sundriesAmount: j.sundries_amount,
+        parts: j.parts || [], history: j.history || [], due: j.due,
+        images: j.images || [], slipImages: j.slip_images || [],
+        signatureUrl: j.signature_url, start: new Date(j.created_at).toLocaleString('en-ZA'),
+      })));
+      setInventory(inventoryData.map(i => ({
+        id: i.id, name: i.name, costPrice: i.cost_price, sellingPrice: i.selling_price,
+        category: i.category || '', barcode: i.barcode || '', supplier: i.supplier || '',
+      })));
+      setInvoices(invoicesData.map(i => ({
+        id: i.id, number: i.number, jobNumber: i.job_number, client: i.client_name,
+        phone: i.phone, date: i.date, total: i.total, paid: i.paid,
+        jobType: i.job_type, description: i.description,
+      })));
+      setQuotes(quotesData.map(q => ({
+        id: q.id, number: q.number, jobNumber: q.job_number, client: q.client_name,
+        phone: q.phone, date: q.date, total: q.total, status: q.status,
+        jobType: q.job_type, description: q.description,
+      })));
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="app">
+        <header className="header">
+          <h1>{INITIAL_SETTINGS.companyName}</h1>
+          <p>Job Management System</p>
+        </header>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', flexDirection: 'column', gap: '16px' }}>
+          <div className="loading-spinner"></div>
+          <p style={{ color: '#888' }}>Loading your workshop data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -1311,16 +1381,16 @@ function App() {
         <p>Job Management System</p>
       </header>
       {page === 'dashboard' && <Dashboard setPage={setPage} />}
-      {page === 'jobs' && <JobsList setPage={setPage} setSelectedJob={setSelectedJob} />}
-      {page === 'jobdetail' && selectedJob && <JobDetail setPage={setPage} job={selectedJob} settings={settings} quickParts={quickParts} setSelectedJob={setSelectedJob} setInvoiceType={setInvoiceType} />}
+      {page === 'jobs' && <JobsList setPage={setPage} setSelectedJob={setSelectedJob} jobs={jobs} />}
+      {page === 'jobdetail' && selectedJob && <JobDetail setPage={setPage} job={selectedJob} settings={settings} quickParts={quickParts} setSelectedJob={setSelectedJob} setInvoiceType={setInvoiceType} inventory={inventory} setJobs={setJobs} jobs={jobs} />}
       {page === 'invoiceview' && selectedJob && <InvoiceView setPage={setPage} job={selectedJob} settings={settings} type={invoiceType} />}
-      {page === 'newjob' && <NewJobCard setPage={setPage} settings={settings} jobTypes={jobTypes} technicians={technicians} problems={problems} />}
+      {page === 'newjob' && <NewJobCard setPage={setPage} settings={settings} jobTypes={jobTypes} technicians={technicians} problems={problems} clients={clients} db={db} setJobs={setJobs} jobs={jobs} />}
       {page === 'signature' && <SignaturePage setPage={setPage} />}
-      {page === 'clients' && <ClientsList setPage={setPage} clients={clients} setClients={setClients} setSelectedClient={setSelectedClient} />}
-      {page === 'clientdetail' && selectedClient && <ClientDetail setPage={setPage} client={selectedClient} setClients={setClients} />}
-      {page === 'inventory' && <InventoryScreen setPage={setPage} inventory={inventory} setInventory={setInventory} />}
-      {page === 'invoices' && <InvoicesScreen setPage={setPage} invoices={invoices} setInvoices={setInvoices} settings={settings} />}
-      {page === 'quotes' && <QuotesScreen setPage={setPage} quotes={quotes} setQuotes={setQuotes} setInvoices={setInvoices} invoices={invoices} settings={settings} />}
+      {page === 'clients' && <ClientsList setPage={setPage} clients={clients} setClients={setClients} setSelectedClient={setSelectedClient} db={db} />}
+      {page === 'clientdetail' && selectedClient && <ClientDetail setPage={setPage} client={selectedClient} setClients={setClients} jobs={jobs} />}
+      {page === 'inventory' && <InventoryScreen setPage={setPage} inventory={inventory} setInventory={setInventory} db={db} />}
+      {page === 'invoices' && <InvoicesScreen setPage={setPage} invoices={invoices} setInvoices={setInvoices} settings={settings} db={db} />}
+      {page === 'quotes' && <QuotesScreen setPage={setPage} quotes={quotes} setQuotes={setQuotes} setInvoices={setInvoices} invoices={invoices} settings={settings} db={db} />}
       {page === 'settings' && <SettingsScreen setPage={setPage} settings={settings} setSettings={setSettings} jobTypes={jobTypes} setJobTypes={setJobTypes} technicians={technicians} setTechnicians={setTechnicians} problems={problems} setProblems={setProblems} quickParts={quickParts} setQuickParts={setQuickParts} />}
     </div>
   );
