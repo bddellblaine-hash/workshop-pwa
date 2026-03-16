@@ -645,4 +645,73 @@ body {
 }
 
 .part-dropdown-item:hover { background: #16213e; }
-.dropdown-price { color: #0a9396; font-weight: bold; }
+.dropdown-price { color: #0a9396; font-weight: bold; }.voice-status-banner {
+  background: #533483;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.voice-hint {
+  background: #1a1a2e;
+  border: 1px dashed #533483;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.quick-parts-section {
+  margin-bottom: 10px;
+}
+
+.quick-parts-label {
+  font-size: 13px;
+  color: #e94560;
+  font-weight: bold;
+}
+
+.quick-parts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-part-btn {
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 10px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.quick-part-btn.added {
+  border-color: #0a9396;
+  background: #0a1f20;
+}
+
+.qp-name { font-size: 12px; text-align: center; }
+.qp-price { font-size: 11px; color: #0a9396; font-weight: bold; }
+
+.qp-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e94560;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: bold;
+}

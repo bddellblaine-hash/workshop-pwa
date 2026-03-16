@@ -52,6 +52,18 @@ const SAMPLE_INVENTORY = [
   { id: 8, name: 'Recoil Assembly', price: 180 },
   { id: 9, name: 'Brake Pads Front', price: 450 },
   { id: 10, name: 'Engine Oil 1L', price: 120 },
+  { id: 11, name: 'Fuel Line', price: 45 },
+  { id: 12, name: 'Blade', price: 180 },
+];
+
+const QUICK_PARTS_CHECKLIST = [
+  { name: 'Spark Plug', price: 45 },
+  { name: 'Fuel Filter', price: 65 },
+  { name: 'Carburettor Kit', price: 320 },
+  { name: 'Pull Cord', price: 55 },
+  { name: 'Primer Bulb', price: 35 },
+  { name: 'Fuel Line', price: 45 },
+  { name: 'Blade', price: 180 },
 ];
 
 const SAMPLE_JOBS = [
@@ -85,26 +97,74 @@ function formatDate(date) {
   return date.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function parseVoiceCommand(transcript, parts, setParts, labourHours, setLabourHours, setNotes, inventory) {
+  const text = transcript.toLowerCase();
+  let handled = false;
+
+  const labourMatch = text.match(/(\d+\.?\d*)\s*(and a half|\.5)?\s*hour/);
+  if (labourMatch) {
+    let hours = parseFloat(labourMatch[1]);
+    if (text.includes('and a half') || text.includes('.5')) hours += 0.5;
+    setLabourHours(hours);
+    handled = true;
+  }
+
+  const halfHourMatch = text.match(/half\s*hour/);
+  if (halfHourMatch) { setLabourHours(0.5); handled = true; }
+
+  inventory.forEach(item => {
+    if (text.includes(item.name.toLowerCase())) {
+      const priceMatch = text.match(/r\s*(\d+)/);
+      const price = priceMatch ? parseFloat(priceMatch[1]) : item.price;
+      setParts(prev => [...prev, { id: Date.now() + Math.random(), name: item.name, price, fromInventory: true }]);
+      handled = true;
+    }
+  });
+
+  const addMatch = text.match(/add\s+(.+?)\s+r\s*(\d+)/);
+  if (addMatch) {
+    setParts(prev => [...prev, { id: Date.now(), name: addMatch[1], price: parseFloat(addMatch[2]), fromInventory: false }]);
+    handled = true;
+  }
+
+  if (!handled) {
+    setNotes(prev => prev ? prev + ' ' + transcript : transcript);
+  }
+}
+
+function useVoice(onResult) {
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Voice not supported. Please use Chrome.');
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
+    recognition.lang = 'en-ZA';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onresult = (e) => onResult(e.results[0][0].transcript);
+    recognition.onerror = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  return { listening, startListening };
+}
+
 function Dashboard({ setPage }) {
   return (
     <div className="dashboard">
       <div className="dash-grid">
-        <div className="dash-card" onClick={() => setPage('jobs')}>
-          <span className="dash-icon">📋</span>
-          <span className="dash-label">Jobs</span>
-        </div>
-        <div className="dash-card" onClick={() => setPage('quotes')}>
-          <span className="dash-icon">💬</span>
-          <span className="dash-label">Quotes</span>
-        </div>
-        <div className="dash-card" onClick={() => setPage('invoices')}>
-          <span className="dash-icon">🧾</span>
-          <span className="dash-label">Invoices</span>
-        </div>
-        <div className="dash-card" onClick={() => setPage('clients')}>
-          <span className="dash-icon">👥</span>
-          <span className="dash-label">Clients</span>
-        </div>
+        <div className="dash-card" onClick={() => setPage('jobs')}><span className="dash-icon">📋</span><span className="dash-label">Jobs</span></div>
+        <div className="dash-card" onClick={() => setPage('quotes')}><span className="dash-icon">💬</span><span className="dash-label">Quotes</span></div>
+        <div className="dash-card" onClick={() => setPage('invoices')}><span className="dash-icon">🧾</span><span className="dash-label">Invoices</span></div>
+        <div className="dash-card" onClick={() => setPage('clients')}><span className="dash-icon">👥</span><span className="dash-label">Clients</span></div>
       </div>
       <button className="btn-primary" onClick={() => setPage('newjob')}>+ New Job Card</button>
     </div>
@@ -128,9 +188,7 @@ function JobsList({ setPage, setSelectedJob }) {
   });
 
   const toggleSelect = (id) => {
-    setSelectedJobs(prev =>
-      prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]
-    );
+    setSelectedJobs(prev => prev.includes(id) ? prev.filter(j => j !== id) : [...prev, id]);
   };
 
   return (
@@ -169,8 +227,7 @@ function JobsList({ setPage, setSelectedJob }) {
           <div key={job.id} className={`job-row ${selectedJobs.includes(job.id) ? 'selected' : ''}`}
             onClick={() => { setSelectedJob(job); setPage('jobdetail'); }}>
             <span className="col-check">
-              <input type="checkbox" checked={selectedJobs.includes(job.id)}
-                onChange={(e) => { e.stopPropagation(); toggleSelect(job.id); }} />
+              <input type="checkbox" checked={selectedJobs.includes(job.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(job.id); }} />
             </span>
             <span className="col-number job-number">{job.number}</span>
             <span className="col-client job-client">{job.client}</span>
@@ -178,9 +235,7 @@ function JobsList({ setPage, setSelectedJob }) {
             <span className="col-type job-type">{job.jobType}</span>
             <span className="col-start job-meta">{job.start}</span>
             <span className="col-status">
-              <span className="status-badge" style={{ background: STATUS[job.status].color }}>
-                {STATUS[job.status].label}
-              </span>
+              <span className="status-badge" style={{ background: STATUS[job.status].color }}>{STATUS[job.status].label}</span>
             </span>
             <span className="col-due job-meta">{job.due}</span>
           </div>
@@ -209,9 +264,10 @@ function JobDetail({ setPage, job }) {
   const [showSlips, setShowSlips] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showQuickParts, setShowQuickParts] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('');
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', text: 'Hi! I can help with repair questions. What do you need to know?' }]);
   const [aiInput, setAiInput] = useState('');
-  const [listening, setListening] = useState(false);
   const cameraRef = useRef(null);
 
   const labourTotal = labourHours * labourRate;
@@ -228,6 +284,10 @@ function JobDetail({ setPage, job }) {
     setShowPartDropdown(false);
   };
 
+  const addFromChecklist = (item) => {
+    setParts(prev => [...prev, { id: Date.now(), name: item.name, price: item.price, fromInventory: true }]);
+  };
+
   const addManualPart = () => {
     if (!manualPart || !manualPrice) return;
     setParts(prev => [...prev, { id: Date.now(), name: manualPart, price: parseFloat(manualPrice), fromInventory: false }]);
@@ -237,27 +297,24 @@ function JobDetail({ setPage, job }) {
 
   const removePart = (id) => setParts(prev => prev.filter(p => p.id !== id));
 
-  const handleVoice = () => {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Voice not supported on this browser. Try Chrome.');
-      return;
-    }
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-ZA';
-    recognition.onstart = () => setListening(true);
-    recognition.onend = () => setListening(false);
-    recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      setNotes(prev => prev ? prev + ' ' + transcript : transcript);
-    };
-    recognition.start();
+  const handleVoiceResult = (transcript) => {
+    setVoiceStatus(`Heard: "${transcript}"`);
+    parseVoiceCommand(transcript, parts, setParts, labourHours, setLabourHours, setNotes, SAMPLE_INVENTORY);
+    setTimeout(() => setVoiceStatus(''), 3000);
   };
+
+  const { listening, startListening } = useVoice(handleVoiceResult);
+
+  const handleAIVoiceResult = (transcript) => {
+    setAiInput(transcript);
+  };
+
+  const { listening: aiListening, startListening: startAIListening } = useVoice(handleAIVoiceResult);
 
   const sendAIMessage = () => {
     if (!aiInput.trim()) return;
     const userMsg = { role: 'user', text: aiInput };
-    setAiMessages(prev => [...prev, userMsg, { role: 'assistant', text: 'This is a placeholder AI response. Once connected to Claude API this will give real repair advice.' }]);
+    setAiMessages(prev => [...prev, userMsg, { role: 'assistant', text: 'This is a placeholder AI response. Once connected to Claude API this will give real repair advice for ' + job.jobType + '.' }]);
     setAiInput('');
   };
 
@@ -269,10 +326,14 @@ function JobDetail({ setPage, job }) {
           <span className="job-number-large">{job.number}</span>
           <span className="job-client-large">{job.client}</span>
         </div>
-        <span className="status-badge" style={{ background: STATUS[status].color }}>
-          {STATUS[status].label}
-        </span>
+        <span className="status-badge" style={{ background: STATUS[status].color }}>{STATUS[status].label}</span>
       </div>
+
+      {voiceStatus && (
+        <div className="voice-status-banner">
+          🎤 {voiceStatus}
+        </div>
+      )}
 
       <div className="jobdetail-body">
 
@@ -307,7 +368,18 @@ function JobDetail({ setPage, job }) {
         </div>
 
         <div className="detail-section">
-          <h3 className="section-title" style={{ marginBottom: '12px' }}>Parts & Labour</h3>
+          <div className="section-row">
+            <h3 className="section-title">Parts & Labour</h3>
+            <button className={`voice-btn ${listening ? 'listening' : ''}`} onClick={startListening}>
+              {listening ? '🔴 Listening...' : '🎤 Voice'}
+            </button>
+          </div>
+
+          {listening && (
+            <div className="voice-hint">
+              Try saying: "2 hours labour" · "Add spark plug" · "Blade R180"
+            </div>
+          )}
 
           <div className="part-row fixed-row">
             <span className="part-name">⏱ Labour</span>
@@ -321,26 +393,42 @@ function JobDetail({ setPage, job }) {
 
           <div className="part-row fixed-row">
             <span className="part-name">🔧 {sundriesLabel}</span>
-            <input
-              className="sundries-input"
-              type="number"
-              value={sundriesAmount}
-              onChange={e => setSundriesAmount(parseFloat(e.target.value) || 0)}
-            />
+            <input className="sundries-input" type="number" value={sundriesAmount} onChange={e => setSundriesAmount(parseFloat(e.target.value) || 0)} />
             <span className="part-price">R{sundriesAmount.toFixed(2)}</span>
           </div>
 
           <div className="parts-divider">Additional Parts</div>
 
+          {!isVehicle && (
+            <div className="quick-parts-section">
+              <div className="section-row" onClick={() => setShowQuickParts(!showQuickParts)} style={{ cursor: 'pointer' }}>
+                <span className="quick-parts-label">⚡ Quick Parts Checklist</span>
+                <button className="toggle-btn">{showQuickParts ? '▲' : '▼'}</button>
+              </div>
+              {showQuickParts && (
+                <div className="quick-parts-grid">
+                  {QUICK_PARTS_CHECKLIST.map((item, i) => {
+                    const alreadyAdded = parts.filter(p => p.name === item.name).length;
+                    return (
+                      <button key={i}
+                        className={`quick-part-btn ${alreadyAdded > 0 ? 'added' : ''}`}
+                        onClick={() => addFromChecklist(item)}>
+                        <span className="qp-name">{item.name}</span>
+                        <span className="qp-price">R{item.price}</span>
+                        {alreadyAdded > 0 && <span className="qp-count">x{alreadyAdded}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="part-search-row">
             <div className="part-search-wrapper">
-              <input
-                className="form-input"
-                placeholder="🔍 Search inventory..."
-                value={partSearch}
+              <input className="form-input" placeholder="🔍 Search inventory..." value={partSearch}
                 onChange={e => { setPartSearch(e.target.value); setShowPartDropdown(true); }}
-                onFocus={() => setShowPartDropdown(true)}
-              />
+                onFocus={() => setShowPartDropdown(true)} />
               {showPartDropdown && partSearch && (
                 <div className="part-dropdown">
                   {filteredInventory.length === 0 && <div className="part-dropdown-item">No items found</div>}
@@ -381,7 +469,7 @@ function JobDetail({ setPage, job }) {
         <div className="detail-section">
           <div className="section-row">
             <h3 className="section-title">Notes</h3>
-            <button className={`voice-btn ${listening ? 'listening' : ''}`} onClick={handleVoice}>
+            <button className={`voice-btn ${listening ? 'listening' : ''}`} onClick={startListening}>
               {listening ? '🔴 Listening...' : '🎤 Voice'}
             </button>
           </div>
@@ -414,7 +502,12 @@ function JobDetail({ setPage, job }) {
                 ))}
               </div>
               <div className="ai-input-row">
-                <input className="form-input" placeholder="Ask a repair question..." value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendAIMessage()} />
+                <input className="form-input" placeholder="Ask a repair question..." value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendAIMessage()} />
+                <button className={`voice-btn ${aiListening ? 'listening' : ''}`} onClick={startAIListening}>
+                  {aiListening ? '🔴' : '🎤'}
+                </button>
                 <button className="add-part-btn" onClick={sendAIMessage}>➤</button>
               </div>
             </div>
@@ -447,6 +540,9 @@ function JobDetail({ setPage, job }) {
           📷 Camera
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} />
         </label>
+        <button className="bottom-btn" onClick={startListening}>
+          {listening ? '🔴' : '🎤'} Voice
+        </button>
         <button className="bottom-btn">🧾 Invoice</button>
         <button className="bottom-btn whatsapp-btn">💬 WhatsApp</button>
       </div>
