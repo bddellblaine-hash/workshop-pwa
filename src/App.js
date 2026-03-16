@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 
 const DEFAULT_JOB_TYPES = [
@@ -12,6 +12,14 @@ const DEFAULT_TECHNICIANS = ['Blaine', 'Technician 2', 'Technician 3'];
 const DEFAULT_PROBLEMS = [
   'Not Starting', 'No Power', 'Oil Leak', 'Smoke', 'Noise',
   'Full Service', 'Carb Clean', 'Quote Only', 'Overheating', 'Service Due'
+];
+
+const TERMS = [
+  'Work lead in time of 5 working days.',
+  'Quotes that are not accepted will have a fee of R450.00.',
+  'Items that are not collected within 3 months will be sold to defray expenses.',
+  'Quotes are subject to change due to unforeseen complications.',
+  'Nothing will be released without payment.',
 ];
 
 const STATUS = {
@@ -170,6 +178,122 @@ function JobsList({ setPage }) {
   );
 }
 
+function SignaturePage({ setPage, jobData }) {
+  const canvasRef = useRef(null);
+  const [drawing, setDrawing] = useState(false);
+  const [signed, setSigned] = useState(false);
+  const now = new Date();
+
+  const startDraw = (e) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setSigned(true);
+  };
+
+  const stopDraw = () => setDrawing(false);
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSigned(false);
+  };
+
+  const handleConfirm = () => {
+    if (!signed) {
+      alert('Please sign before confirming.');
+      return;
+    }
+    alert('Job card created and terms signed!\nWhatsApp confirmation will be sent to client.');
+    setPage('jobs');
+  };
+
+  return (
+    <div className="form-screen">
+      <div className="form-header">
+        <button className="back-btn" onClick={() => setPage('newjob')}>← Back</button>
+        <h2>Terms & Signature</h2>
+      </div>
+
+      <div className="form-body">
+
+        <div className="form-section">
+          <div className="job-ref-row">
+            <span className="job-ref-label">Job Number</span>
+            <span className="job-ref-value">JB11158</span>
+          </div>
+          <div className="job-ref-row">
+            <span className="job-ref-label">Client</span>
+            <span className="job-ref-value">{jobData?.clientName || 'Client Name'}</span>
+          </div>
+          <div className="job-ref-row">
+            <span className="job-ref-label">Date & Time</span>
+            <span className="job-ref-value">{now.toLocaleString('en-ZA')}</span>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3 className="section-title">Terms & Conditions</h3>
+          <div className="terms-box">
+            {TERMS.map((term, i) => (
+              <div key={i} className="term-item">
+                <span className="term-number">{i + 1}.</span>
+                <span className="term-text">{term}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3 className="section-title">Client Signature</h3>
+          <p className="sig-instruction">By signing below you agree to the above terms and conditions.</p>
+          <div className="canvas-wrapper">
+            <canvas
+              ref={canvasRef}
+              width={340}
+              height={150}
+              className="sig-canvas"
+              onMouseDown={startDraw}
+              onMouseMove={draw}
+              onMouseUp={stopDraw}
+              onTouchStart={startDraw}
+              onTouchMove={draw}
+              onTouchEnd={stopDraw}
+            />
+          </div>
+          <button className="clear-btn" onClick={clearSignature}>Clear Signature</button>
+        </div>
+
+        <button className="btn-primary" onClick={handleConfirm}>
+          ✅ Confirm & Send WhatsApp
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
 function NewJobCard({ setPage }) {
   const today = new Date();
   const defaultDue = addWorkingDays(today, 5);
@@ -210,10 +334,9 @@ function NewJobCard({ setPage }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleNext = () => {
     if (validate()) {
-      alert('Job card created successfully!');
-      setPage('jobs');
+      setPage('signature');
     }
   };
 
@@ -276,7 +399,6 @@ function NewJobCard({ setPage }) {
             </select>
             {errors.jobType && <span className="error">{errors.jobType}</span>}
           </div>
-
           {jobType === 'CAR/BAKKIE' && (
             <div className="vehicle-fields">
               <div className="field">
@@ -363,8 +485,8 @@ function NewJobCard({ setPage }) {
           </div>
         </div>
 
-        <button className="btn-primary" onClick={handleSubmit}>
-          Create Job Card
+        <button className="btn-primary" onClick={handleNext}>
+          Next — Terms & Signature →
         </button>
 
       </div>
@@ -374,6 +496,7 @@ function NewJobCard({ setPage }) {
 
 function App() {
   const [page, setPage] = useState('dashboard');
+  const [jobData, setJobData] = useState(null); // eslint-disable-line
 
   return (
     <div className="app">
@@ -384,6 +507,7 @@ function App() {
       {page === 'dashboard' && <Dashboard setPage={setPage} />}
       {page === 'jobs' && <JobsList setPage={setPage} />}
       {page === 'newjob' && <NewJobCard setPage={setPage} />}
+      {page === 'signature' && <SignaturePage setPage={setPage} jobData={jobData} />}
       {page === 'quotes' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Quotes — Coming Soon</h2></div>}
       {page === 'invoices' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Invoices — Coming Soon</h2></div>}
       {page === 'clients' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Clients — Coming Soon</h2></div>}
