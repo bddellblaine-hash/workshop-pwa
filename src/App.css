@@ -333,4 +333,219 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
+}.jobdetail-screen { padding: 16px; padding-bottom: 80px; }
+
+.jobdetail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
+
+.jobdetail-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.job-number-large { font-size: 18px; font-weight: bold; color: #e94560; }
+.job-client-large { font-size: 15px; color: #ccc; }
+
+.jobdetail-body { display: flex; flex-direction: column; gap: 12px; }
+
+.detail-section {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #0f3460;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #0f3460;
+  font-size: 14px;
+}
+
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: #888; }
+.detail-value { font-weight: bold; text-align: right; max-width: 60%; }
+
+.section-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.status-option {
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+}
+
+.status-option.active { color: white; }
+
+.parts-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.part-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #1a1a2e;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.part-name { flex: 1; }
+.part-price { color: #0a9396; font-weight: bold; margin-right: 10px; }
+
+.remove-part {
+  background: none;
+  border: none;
+  color: #e94560;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-part-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.part-input { flex: 2; }
+.price-input { flex: 1; }
+
+.add-part-btn {
+  padding: 10px 16px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.parts-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #0f3460;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.no-parts { color: #888; font-size: 13px; text-align: center; padding: 10px; }
+
+.voice-btn {
+  padding: 6px 12px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.voice-btn.listening { background: #e94560; border-color: #e94560; }
+
+.slips-body { display: flex; flex-direction: column; gap: 10px; }
+
+.upload-btn {
+  padding: 10px;
+  background: #0f3460;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.ai-chat { display: flex; flex-direction: column; gap: 10px; }
+
+.ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ai-message {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 85%;
+}
+
+.ai-message.assistant { background: #0f3460; align-self: flex-start; }
+.ai-message.user { background: #e94560; align-self: flex-end; }
+
+.ai-input-row { display: flex; gap: 8px; }
+
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: #1a1a2e;
+  border-radius: 6px;
+}
+
+.history-time { font-size: 11px; color: #888; }
+.history-note { font-size: 13px; }
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #16213e;
+  border-top: 2px solid #0f3460;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 100;
+}
+
+.bottom-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+}
+
+.camera-label { cursor: pointer; color: white; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
+.whatsapp-btn { color: #25d366; }
