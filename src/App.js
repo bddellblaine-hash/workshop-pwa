@@ -1,12 +1,28 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
 
-const DEFAULT_SETTINGS = {
+const INITIAL_SETTINGS = {
   labourRateVehicle: 695,
   labourRateOther: 550,
   sundriesVehicle: 295,
   sundriesOther: 115,
   defaultDueDays: 5,
+  vatEnabled: false,
+  companyName: 'OBD Workshop',
+  companyAddress: '',
+  companyPhone: '',
+  companyEmail: '',
+  companyLogo: '',
+  invoicePrefix: 'JB',
+  invoiceNextNumber: 11158,
+  paymentTerms: 'Nothing will be released without payment.',
+  quoteValidity: '30 days',
+  invoiceHeaderText: '',
+  invoiceFooterText: '',
+  bankName: '',
+  bankAccount: '',
+  bankBranch: '',
+  bankReference: '',
 };
 
 const VEHICLE_JOB_TYPES = ['CAR/BAKKIE', 'MOTORBIKE/QUADBIKE'];
@@ -56,16 +72,6 @@ const SAMPLE_INVENTORY = [
   { id: 12, name: 'Blade', price: 180 },
 ];
 
-const QUICK_PARTS_CHECKLIST = [
-  { name: 'Spark Plug', price: 45 },
-  { name: 'Fuel Filter', price: 65 },
-  { name: 'Carburettor Kit', price: 320 },
-  { name: 'Pull Cord', price: 55 },
-  { name: 'Primer Bulb', price: 35 },
-  { name: 'Fuel Line', price: 45 },
-  { name: 'Blade', price: 180 },
-];
-
 const SAMPLE_JOBS = [
   { id: 1, number: 'JB11152', client: 'John Wick', phone: '0821234567', description: 'Engine misfire on startup', jobType: 'CAR/BAKKIE', vehicleMake: 'Opel', vehicleModel: 'Corsa', registration: 'ABC123GP', start: '16 Mar 2026 08:00', due: '23 Mar 2026', status: 'wip', technician: 'Blaine', notes: 'Check spark plugs and coil packs first.', photos: [], slips: [], history: [{ time: '16 Mar 2026 08:00', note: 'Job booked by Blaine' }, { time: '16 Mar 2026 09:00', note: 'Status changed to In Progress' }] },
   { id: 2, number: 'JB11153', client: 'Peter Smith', phone: '0837654321', description: 'Service and brake pads', jobType: 'CAR/BAKKIE', vehicleMake: 'VW', vehicleModel: 'Golf', registration: 'DEF456GP', start: '16 Mar 2026 09:30', due: '17 Mar 2026', status: 'new', technician: 'Technician 2', notes: '', photos: [], slips: [], history: [{ time: '16 Mar 2026 09:30', note: 'Job booked by Blaine' }] },
@@ -80,6 +86,16 @@ const SAMPLE_CLIENTS = [
   { id: 2, name: 'Peter Smith', phone: '0837654321', email: 'peter@email.com' },
   { id: 3, name: 'Mike Jones', phone: '0849876543', email: 'mike@email.com' },
   { id: 4, name: 'Sarah Brown', phone: '0851112233', email: 'sarah@email.com' },
+];
+
+const INITIAL_QUICK_PARTS = [
+  { name: 'Spark Plug', price: 45 },
+  { name: 'Fuel Filter', price: 65 },
+  { name: 'Carburettor Kit', price: 320 },
+  { name: 'Pull Cord', price: 55 },
+  { name: 'Primer Bulb', price: 35 },
+  { name: 'Fuel Line', price: 45 },
+  { name: 'Blade', price: 180 },
 ];
 
 function addWorkingDays(date, days) {
@@ -157,6 +173,224 @@ function useVoice(onResult) {
   return { listening, startListening };
 }
 
+function CollapsibleSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="settings-section">
+      <div className="settings-section-header" onClick={() => setOpen(!open)}>
+        <h3 className="settings-section-title">{title}</h3>
+        <button className="toggle-btn">{open ? '▲' : '▼'}</button>
+      </div>
+      {open && <div className="settings-section-body">{children}</div>}
+    </div>
+  );
+}
+
+function SettingsScreen({ setPage, settings, setSettings, jobTypes, setJobTypes, technicians, setTechnicians, problems, setProblems, quickParts, setQuickParts }) {
+  const [newJobType, setNewJobType] = useState('');
+  const [newTechnician, setNewTechnician] = useState('');
+  const [newProblem, setNewProblem] = useState('');
+  const [newQuickPartName, setNewQuickPartName] = useState('');
+  const [newQuickPartPrice, setNewQuickPartPrice] = useState('');
+  const [saved, setSaved] = useState(false);
+  const logoRef = useRef(null);
+
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => updateSetting('companyLogo', ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="form-screen">
+      <div className="form-header">
+        <button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button>
+        <h2>⚙ Settings</h2>
+      </div>
+
+      <div className="form-body">
+
+        <CollapsibleSection title="🏢 Company Details" defaultOpen={true}>
+          <div className="field">
+            <label className="settings-label">Company Name</label>
+            <input className="form-input" value={settings.companyName} onChange={e => updateSetting('companyName', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Address</label>
+            <textarea className="form-input" rows={2} value={settings.companyAddress} onChange={e => updateSetting('companyAddress', e.target.value)} placeholder="Shop address..." />
+          </div>
+          <div className="field">
+            <label className="settings-label">Phone</label>
+            <input className="form-input" value={settings.companyPhone} onChange={e => updateSetting('companyPhone', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Email</label>
+            <input className="form-input" value={settings.companyEmail} onChange={e => updateSetting('companyEmail', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Logo</label>
+            {settings.companyLogo && <img src={settings.companyLogo} alt="logo" className="logo-preview" />}
+            <button className="upload-btn" onClick={() => logoRef.current.click()}>📷 Upload Logo</button>
+            <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="💰 Labour & Sundries Rates">
+          <div className="settings-row">
+            <label className="settings-label">Vehicle Labour Rate (R/hr)</label>
+            <input className="settings-input" type="number" value={settings.labourRateVehicle} onChange={e => updateSetting('labourRateVehicle', parseFloat(e.target.value))} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Other Labour Rate (R/hr)</label>
+            <input className="settings-input" type="number" value={settings.labourRateOther} onChange={e => updateSetting('labourRateOther', parseFloat(e.target.value))} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Vehicle Sundries (R)</label>
+            <input className="settings-input" type="number" value={settings.sundriesVehicle} onChange={e => updateSetting('sundriesVehicle', parseFloat(e.target.value))} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Machine Sundries (R)</label>
+            <input className="settings-input" type="number" value={settings.sundriesOther} onChange={e => updateSetting('sundriesOther', parseFloat(e.target.value))} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Default Due Days</label>
+            <input className="settings-input" type="number" value={settings.defaultDueDays} onChange={e => updateSetting('defaultDueDays', parseInt(e.target.value))} />
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="🧾 Invoice & Quote Layout">
+          <div className="settings-row">
+            <label className="settings-label">Invoice Number Prefix</label>
+            <input className="settings-input" value={settings.invoicePrefix} onChange={e => updateSetting('invoicePrefix', e.target.value)} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Next Invoice Number</label>
+            <input className="settings-input" type="number" value={settings.invoiceNextNumber} onChange={e => updateSetting('invoiceNextNumber', parseInt(e.target.value))} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Payment Terms</label>
+            <textarea className="form-input" rows={2} value={settings.paymentTerms} onChange={e => updateSetting('paymentTerms', e.target.value)} />
+          </div>
+          <div className="settings-row">
+            <label className="settings-label">Quote Validity</label>
+            <input className="settings-input" value={settings.quoteValidity} onChange={e => updateSetting('quoteValidity', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Invoice Header Text</label>
+            <input className="form-input" value={settings.invoiceHeaderText} onChange={e => updateSetting('invoiceHeaderText', e.target.value)} placeholder="Optional header text..." />
+          </div>
+          <div className="field">
+            <label className="settings-label">Invoice Footer Text</label>
+            <input className="form-input" value={settings.invoiceFooterText} onChange={e => updateSetting('invoiceFooterText', e.target.value)} placeholder="Optional footer text..." />
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="🏦 Bank Details">
+          <div className="field">
+            <label className="settings-label">Bank Name</label>
+            <input className="form-input" value={settings.bankName} onChange={e => updateSetting('bankName', e.target.value)} placeholder="e.g. FNB" />
+          </div>
+          <div className="field">
+            <label className="settings-label">Account Number</label>
+            <input className="form-input" value={settings.bankAccount} onChange={e => updateSetting('bankAccount', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Branch Code</label>
+            <input className="form-input" value={settings.bankBranch} onChange={e => updateSetting('bankBranch', e.target.value)} />
+          </div>
+          <div className="field">
+            <label className="settings-label">Reference Format</label>
+            <input className="form-input" value={settings.bankReference} onChange={e => updateSetting('bankReference', e.target.value)} placeholder="e.g. Invoice number" />
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="👷 Technicians">
+          <div className="tags-list">
+            {technicians.map((t, i) => (
+              <div key={i} className="tag-item">
+                <span>{t}</span>
+                <button className="tag-remove" onClick={() => setTechnicians(prev => prev.filter((_, idx) => idx !== i))}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div className="add-tag-row">
+            <input className="form-input" placeholder="Add technician name..." value={newTechnician} onChange={e => setNewTechnician(e.target.value)} />
+            <button className="add-part-btn" onClick={() => { if (newTechnician.trim()) { setTechnicians(prev => [...prev, newTechnician.trim()]); setNewTechnician(''); } }}>+</button>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="🔧 Job Types">
+          <div className="tags-list">
+            {jobTypes.map((t, i) => (
+              <div key={i} className="tag-item">
+                <span>{t}</span>
+                <button className="tag-remove" onClick={() => setJobTypes(prev => prev.filter((_, idx) => idx !== i))}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div className="add-tag-row">
+            <input className="form-input" placeholder="Add job type..." value={newJobType} onChange={e => setNewJobType(e.target.value)} />
+            <button className="add-part-btn" onClick={() => { if (newJobType.trim()) { setJobTypes(prev => [...prev, newJobType.trim().toUpperCase()]); setNewJobType(''); } }}>+</button>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="📋 Problem Checklist">
+          <div className="tags-list">
+            {problems.map((p, i) => (
+              <div key={i} className="tag-item">
+                <span>{p}</span>
+                <button className="tag-remove" onClick={() => setProblems(prev => prev.filter((_, idx) => idx !== i))}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div className="add-tag-row">
+            <input className="form-input" placeholder="Add problem..." value={newProblem} onChange={e => setNewProblem(e.target.value)} />
+            <button className="add-part-btn" onClick={() => { if (newProblem.trim()) { setProblems(prev => [...prev, newProblem.trim()]); setNewProblem(''); } }}>+</button>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="⚡ Quick Parts Checklist">
+          <div className="tags-list">
+            {quickParts.map((p, i) => (
+              <div key={i} className="tag-item">
+                <span>{p.name} — R{p.price}</span>
+                <button className="tag-remove" onClick={() => setQuickParts(prev => prev.filter((_, idx) => idx !== i))}>✕</button>
+              </div>
+            ))}
+          </div>
+          <div className="add-tag-row">
+            <input className="form-input part-input" placeholder="Part name..." value={newQuickPartName} onChange={e => setNewQuickPartName(e.target.value)} />
+            <input className="form-input price-input" placeholder="Price" type="number" value={newQuickPartPrice} onChange={e => setNewQuickPartPrice(e.target.value)} />
+            <button className="add-part-btn" onClick={() => {
+              if (newQuickPartName.trim() && newQuickPartPrice) {
+                setQuickParts(prev => [...prev, { name: newQuickPartName.trim(), price: parseFloat(newQuickPartPrice) }]);
+                setNewQuickPartName('');
+                setNewQuickPartPrice('');
+              }
+            }}>+</button>
+          </div>
+        </CollapsibleSection>
+
+        <button className="btn-primary" onClick={handleSave}>
+          {saved ? '✅ Saved!' : 'Save Settings'}
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
 function Dashboard({ setPage }) {
   return (
     <div className="dashboard">
@@ -167,6 +401,7 @@ function Dashboard({ setPage }) {
         <div className="dash-card" onClick={() => setPage('clients')}><span className="dash-icon">👥</span><span className="dash-label">Clients</span></div>
       </div>
       <button className="btn-primary" onClick={() => setPage('newjob')}>+ New Job Card</button>
+      <button className="btn-settings" onClick={() => setPage('settings')}>⚙ Settings</button>
     </div>
   );
 }
@@ -245,10 +480,10 @@ function JobsList({ setPage, setSelectedJob }) {
   );
 }
 
-function JobDetail({ setPage, job }) {
+function JobDetail({ setPage, job, settings, quickParts }) {
   const isVehicle = VEHICLE_JOB_TYPES.includes(job.jobType);
-  const labourRate = isVehicle ? DEFAULT_SETTINGS.labourRateVehicle : DEFAULT_SETTINGS.labourRateOther;
-  const sundriesRate = isVehicle ? DEFAULT_SETTINGS.sundriesVehicle : DEFAULT_SETTINGS.sundriesOther;
+  const labourRate = isVehicle ? settings.labourRateVehicle : settings.labourRateOther;
+  const sundriesRate = isVehicle ? settings.sundriesVehicle : settings.sundriesOther;
   const sundriesLabel = isVehicle ? 'Vehicle Sundries' : 'Machine Sundries';
 
   const [status, setStatus] = useState(job.status);
@@ -305,16 +540,15 @@ function JobDetail({ setPage, job }) {
 
   const { listening, startListening } = useVoice(handleVoiceResult);
 
-  const handleAIVoiceResult = (transcript) => {
-    setAiInput(transcript);
-  };
-
+  const handleAIVoiceResult = (transcript) => setAiInput(transcript);
   const { listening: aiListening, startListening: startAIListening } = useVoice(handleAIVoiceResult);
 
   const sendAIMessage = () => {
     if (!aiInput.trim()) return;
-    const userMsg = { role: 'user', text: aiInput };
-    setAiMessages(prev => [...prev, userMsg, { role: 'assistant', text: 'This is a placeholder AI response. Once connected to Claude API this will give real repair advice for ' + job.jobType + '.' }]);
+    setAiMessages(prev => [...prev,
+      { role: 'user', text: aiInput },
+      { role: 'assistant', text: 'Placeholder AI response for ' + job.jobType + '. Claude API coming soon.' }
+    ]);
     setAiInput('');
   };
 
@@ -329,20 +563,14 @@ function JobDetail({ setPage, job }) {
         <span className="status-badge" style={{ background: STATUS[status].color }}>{STATUS[status].label}</span>
       </div>
 
-      {voiceStatus && (
-        <div className="voice-status-banner">
-          🎤 {voiceStatus}
-        </div>
-      )}
+      {voiceStatus && <div className="voice-status-banner">🎤 {voiceStatus}</div>}
 
       <div className="jobdetail-body">
 
         <div className="detail-section">
           <div className="detail-row"><span className="detail-label">Phone</span><span className="detail-value">{job.phone}</span></div>
           <div className="detail-row"><span className="detail-label">Job Type</span><span className="detail-value">{job.jobType}</span></div>
-          {job.vehicleMake && (
-            <div className="detail-row"><span className="detail-label">Vehicle</span><span className="detail-value">{job.vehicleMake} {job.vehicleModel} — {job.registration}</span></div>
-          )}
+          {job.vehicleMake && <div className="detail-row"><span className="detail-label">Vehicle</span><span className="detail-value">{job.vehicleMake} {job.vehicleModel} — {job.registration}</span></div>}
           <div className="detail-row"><span className="detail-label">Problem</span><span className="detail-value">{job.description}</span></div>
           <div className="detail-row"><span className="detail-label">Technician</span><span className="detail-value">{job.technician}</span></div>
           <div className="detail-row"><span className="detail-label">Due</span><span className="detail-value">{job.due}</span></div>
@@ -356,8 +584,7 @@ function JobDetail({ setPage, job }) {
           {showStatusMenu && (
             <div className="status-grid">
               {Object.entries(STATUS).map(([key, val]) => (
-                <button key={key}
-                  className={`status-option ${status === key ? 'active' : ''}`}
+                <button key={key} className={`status-option ${status === key ? 'active' : ''}`}
                   style={{ borderColor: val.color, background: status === key ? val.color : 'transparent' }}
                   onClick={() => { setStatus(key); setShowStatusMenu(false); }}>
                   {val.label}
@@ -375,11 +602,7 @@ function JobDetail({ setPage, job }) {
             </button>
           </div>
 
-          {listening && (
-            <div className="voice-hint">
-              Try saying: "2 hours labour" · "Add spark plug" · "Blade R180"
-            </div>
-          )}
+          {listening && <div className="voice-hint">Try: "2 hours labour" · "Add spark plug" · "Blade R180"</div>}
 
           <div className="part-row fixed-row">
             <span className="part-name">⏱ Labour</span>
@@ -407,12 +630,10 @@ function JobDetail({ setPage, job }) {
               </div>
               {showQuickParts && (
                 <div className="quick-parts-grid">
-                  {QUICK_PARTS_CHECKLIST.map((item, i) => {
+                  {quickParts.map((item, i) => {
                     const alreadyAdded = parts.filter(p => p.name === item.name).length;
                     return (
-                      <button key={i}
-                        className={`quick-part-btn ${alreadyAdded > 0 ? 'added' : ''}`}
-                        onClick={() => addFromChecklist(item)}>
+                      <button key={i} className={`quick-part-btn ${alreadyAdded > 0 ? 'added' : ''}`} onClick={() => addFromChecklist(item)}>
                         <span className="qp-name">{item.name}</span>
                         <span className="qp-price">R{item.price}</span>
                         {alreadyAdded > 0 && <span className="qp-count">x{alreadyAdded}</span>}
@@ -540,9 +761,7 @@ function JobDetail({ setPage, job }) {
           📷 Camera
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} />
         </label>
-        <button className="bottom-btn" onClick={startListening}>
-          {listening ? '🔴' : '🎤'} Voice
-        </button>
+        <button className="bottom-btn" onClick={startListening}>{listening ? '🔴' : '🎤'} Voice</button>
         <button className="bottom-btn">🧾 Invoice</button>
         <button className="bottom-btn whatsapp-btn">💬 WhatsApp</button>
       </div>
@@ -594,7 +813,7 @@ function SignaturePage({ setPage }) {
 
   const handleConfirm = () => {
     if (!signed) { alert('Please sign before confirming.'); return; }
-    alert('Job card created and terms signed!\nWhatsApp confirmation will be sent to client.');
+    alert('Job card created!\nWhatsApp confirmation will be sent to client.');
     setPage('jobs');
   };
 
@@ -636,9 +855,9 @@ function SignaturePage({ setPage }) {
   );
 }
 
-function NewJobCard({ setPage }) {
+function NewJobCard({ setPage, settings, jobTypes, technicians, problems }) {
   const today = new Date();
-  const defaultDue = addWorkingDays(today, 5);
+  const defaultDue = addWorkingDays(today, settings.defaultDueDays);
   const [clientSearch, setClientSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
   const [showClientResults, setShowClientResults] = useState(false);
@@ -658,9 +877,7 @@ function NewJobCard({ setPage }) {
   );
 
   const toggleProblem = (problem) => {
-    setSelectedProblems(prev =>
-      prev.includes(problem) ? prev.filter(p => p !== problem) : [...prev, problem]
-    );
+    setSelectedProblems(prev => prev.includes(problem) ? prev.filter(p => p !== problem) : [...prev, problem]);
   };
 
   const validate = () => {
@@ -709,7 +926,7 @@ function NewJobCard({ setPage }) {
           <div className="field">
             <select className="form-input" value={jobType} onChange={e => setJobType(e.target.value)}>
               <option value="">Select job type...</option>
-              {DEFAULT_JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             {errors.jobType && <span className="error">{errors.jobType}</span>}
           </div>
@@ -732,7 +949,7 @@ function NewJobCard({ setPage }) {
         <div className="form-section">
           <h3 className="section-title">Problem</h3>
           <div className="problems-grid">
-            {DEFAULT_PROBLEMS.map(p => (
+            {problems.map(p => (
               <button key={p} className={`problem-btn ${selectedProblems.includes(p) ? 'active' : ''}`} onClick={() => toggleProblem(p)}>{p}</button>
             ))}
           </div>
@@ -746,7 +963,7 @@ function NewJobCard({ setPage }) {
           <div className="field">
             <select className="form-input" value={technician} onChange={e => setTechnician(e.target.value)}>
               <option value="">Assign technician...</option>
-              {DEFAULT_TECHNICIANS.map(t => <option key={t} value={t}>{t}</option>)}
+              {technicians.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             {errors.technician && <span className="error">{errors.technician}</span>}
           </div>
@@ -755,7 +972,7 @@ function NewJobCard({ setPage }) {
           <h3 className="section-title">Due Date</h3>
           <div className="field">
             <input className="form-input" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-            <span className="field-hint">Auto-set to 5 working days — tap to edit</span>
+            <span className="field-hint">Auto-set to {settings.defaultDueDays} working days — tap to edit</span>
           </div>
         </div>
         <button className="btn-primary" onClick={handleNext}>Next — Terms & Signature →</button>
@@ -767,18 +984,24 @@ function NewJobCard({ setPage }) {
 function App() {
   const [page, setPage] = useState('dashboard');
   const [selectedJob, setSelectedJob] = useState(null);
+  const [settings, setSettings] = useState(INITIAL_SETTINGS);
+  const [jobTypes, setJobTypes] = useState(DEFAULT_JOB_TYPES);
+  const [technicians, setTechnicians] = useState(DEFAULT_TECHNICIANS);
+  const [problems, setProblems] = useState(DEFAULT_PROBLEMS);
+  const [quickParts, setQuickParts] = useState(INITIAL_QUICK_PARTS);
 
   return (
     <div className="app">
       <header className="header">
-        <h1>OBD Workshop</h1>
+        <h1>{settings.companyName}</h1>
         <p>Job Management System</p>
       </header>
       {page === 'dashboard' && <Dashboard setPage={setPage} />}
       {page === 'jobs' && <JobsList setPage={setPage} setSelectedJob={setSelectedJob} />}
-      {page === 'jobdetail' && selectedJob && <JobDetail setPage={setPage} job={selectedJob} />}
-      {page === 'newjob' && <NewJobCard setPage={setPage} />}
+      {page === 'jobdetail' && selectedJob && <JobDetail setPage={setPage} job={selectedJob} settings={settings} quickParts={quickParts} />}
+      {page === 'newjob' && <NewJobCard setPage={setPage} settings={settings} jobTypes={jobTypes} technicians={technicians} problems={problems} />}
       {page === 'signature' && <SignaturePage setPage={setPage} />}
+      {page === 'settings' && <SettingsScreen setPage={setPage} settings={settings} setSettings={setSettings} jobTypes={jobTypes} setJobTypes={setJobTypes} technicians={technicians} setTechnicians={setTechnicians} problems={problems} setProblems={setProblems} quickParts={quickParts} setQuickParts={setQuickParts} />}
       {page === 'quotes' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Quotes — Coming Soon</h2></div>}
       {page === 'invoices' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Invoices — Coming Soon</h2></div>}
       {page === 'clients' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Clients — Coming Soon</h2></div>}
