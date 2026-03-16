@@ -51,7 +51,7 @@ function Dashboard({ setPage }) {
   );
 }
 
-function JobsList({ setPage, jobTypes }) {
+function JobsList({ setPage }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [showFilter, setShowFilter] = useState(false);
@@ -147,7 +147,7 @@ function JobsList({ setPage, jobTypes }) {
 
 function App() {
   const [page, setPage] = useState('dashboard');
-  const [jobTypes, setJobTypes] = useState(DEFAULT_JOB_TYPES);
+  const jobTypes = DEFAULT_JOB_TYPES; // eslint-disable-line
 
   return (
     <div className="app">
