@@ -178,7 +178,9 @@ body {
   flex-direction: column;
   gap: 20px;
   align-items: center;
-}.form-screen { padding: 16px; max-width: 600px; margin: 0 auto; }
+}
+
+.form-screen { padding: 16px; max-width: 600px; margin: 0 auto; }
 
 .form-header {
   display: flex;
@@ -274,7 +276,9 @@ body {
 .problem-btn.active {
   background: #e94560;
   border-color: #e94560;
-}.job-ref-row {
+}
+
+.job-ref-row {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
@@ -333,7 +337,9 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
-}.jobdetail-screen { padding: 16px; padding-bottom: 80px; }
+}
+
+.jobdetail-screen { padding: 16px; padding-bottom: 80px; }
 
 .jobdetail-header {
   display: flex;
@@ -549,3 +555,94 @@ body {
 
 .camera-label { cursor: pointer; color: white; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
 .whatsapp-btn { color: #25d366; }
+
+.fixed-row {
+  background: #0f3460;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+
+.labour-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.qty-btn {
+  background: #e94560;
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.labour-hours {
+  font-size: 13px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.sundries-input {
+  width: 80px;
+  padding: 4px 8px;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  text-align: center;
+  flex: 1;
+  margin: 0 8px;
+}
+
+.parts-divider {
+  text-align: center;
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 0;
+  border-top: 1px solid #0f3460;
+  border-bottom: 1px solid #0f3460;
+  margin: 8px 0;
+}
+
+.part-search-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.part-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.part-dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  border-bottom: 1px solid #0f3460;
+}
+
+.part-dropdown-item:hover { background: #16213e; }
+.dropdown-price { color: #0a9396; font-weight: bold; }

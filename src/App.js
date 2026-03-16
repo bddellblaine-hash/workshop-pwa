@@ -1,6 +1,16 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
 
+const DEFAULT_SETTINGS = {
+  labourRateVehicle: 695,
+  labourRateOther: 550,
+  sundriesVehicle: 295,
+  sundriesOther: 115,
+  defaultDueDays: 5,
+};
+
+const VEHICLE_JOB_TYPES = ['CAR/BAKKIE', 'MOTORBIKE/QUADBIKE'];
+
 const DEFAULT_JOB_TYPES = [
   'CAR/BAKKIE', 'LAWNMOWER', 'CHAINSAW/POLE SAW', 'BRUSHCUTTER/WEEDEATER',
   'GENERATOR', 'HEDGE TRIMMER', 'PRESSURE WASHER', 'VACUUM/BLOWER',
@@ -31,13 +41,26 @@ const STATUS = {
   invoice: { label: 'Invoice & Collection', color: '#2d6a4f' },
 };
 
+const SAMPLE_INVENTORY = [
+  { id: 1, name: 'Air Filter', price: 85 },
+  { id: 2, name: 'Spark Plug', price: 45 },
+  { id: 3, name: 'Fuel Filter', price: 65 },
+  { id: 4, name: 'Oil Filter', price: 75 },
+  { id: 5, name: 'Carburettor Kit', price: 320 },
+  { id: 6, name: 'Pull Cord', price: 55 },
+  { id: 7, name: 'Primer Bulb', price: 35 },
+  { id: 8, name: 'Recoil Assembly', price: 180 },
+  { id: 9, name: 'Brake Pads Front', price: 450 },
+  { id: 10, name: 'Engine Oil 1L', price: 120 },
+];
+
 const SAMPLE_JOBS = [
-  { id: 1, number: 'JB11152', client: 'John Wick', phone: '0821234567', description: 'Engine misfire on startup', jobType: 'CAR/BAKKIE', vehicleMake: 'Opel', vehicleModel: 'Corsa', registration: 'ABC123GP', start: '16 Mar 2026 08:00', due: '23 Mar 2026', status: 'wip', technician: 'Blaine', notes: 'Check spark plugs and coil packs first.', parts: [{ id: 1, name: 'Spark Plugs x4', price: 320 }, { id: 2, name: 'Labour — 2hrs', price: 600 }], photos: [], slips: [], history: [{ time: '16 Mar 2026 08:00', note: 'Job booked by Blaine' }, { time: '16 Mar 2026 09:00', note: 'Status changed to In Progress' }] },
-  { id: 2, number: 'JB11153', client: 'Peter Smith', phone: '0837654321', description: 'Service and brake pads', jobType: 'CAR/BAKKIE', vehicleMake: 'VW', vehicleModel: 'Golf', registration: 'DEF456GP', start: '16 Mar 2026 09:30', due: '17 Mar 2026', status: 'new', technician: 'Technician 2', notes: '', parts: [], photos: [], slips: [], history: [{ time: '16 Mar 2026 09:30', note: 'Job booked by Blaine' }] },
-  { id: 3, number: 'JB11154', client: 'Mike Jones', phone: '0849876543', description: 'Not starting — quote first', jobType: 'LAWNMOWER', vehicleMake: '', vehicleModel: '', registration: '', start: '16 Mar 2026 10:00', due: '23 Mar 2026', status: 'quoting', technician: 'Blaine', notes: 'Client wants quote before proceeding.', parts: [], photos: [], slips: [], history: [{ time: '16 Mar 2026 10:00', note: 'Job booked by Blaine' }] },
-  { id: 4, number: 'JB11155', client: 'Sarah Brown', phone: '0851112233', description: 'Full service and blade sharpen', jobType: 'CHAINSAW/POLE SAW', vehicleMake: '', vehicleModel: '', registration: '', start: '12 Mar 2026 11:00', due: '19 Mar 2026', status: 'completed', technician: 'Technician 2', notes: '', parts: [{ id: 1, name: 'Air Filter', price: 85 }, { id: 2, name: 'Labour — 1hr', price: 300 }], photos: [], slips: [], history: [{ time: '12 Mar 2026 11:00', note: 'Job booked' }, { time: '13 Mar 2026 09:00', note: 'Status changed to Completed' }] },
-  { id: 5, number: 'JB11156', client: 'Dave Wilson', phone: '0829998877', description: 'Carb clean and tune', jobType: 'BRUSHCUTTER/WEEDEATER', vehicleMake: '', vehicleModel: '', registration: '', start: '11 Mar 2026 14:00', due: '18 Mar 2026', status: 'testing', technician: 'Blaine', notes: '', parts: [], photos: [], slips: [], history: [{ time: '11 Mar 2026 14:00', note: 'Job booked' }] },
-  { id: 6, number: 'JB11157', client: 'Lisa Taylor', phone: '0834445566', description: 'Starter motor replacement', jobType: 'GENERATOR', vehicleMake: '', vehicleModel: '', registration: '', start: '10 Mar 2026 09:00', due: '17 Mar 2026', status: 'invoice', technician: 'Technician 2', notes: '', parts: [{ id: 1, name: 'Starter Motor', price: 1200 }, { id: 2, name: 'Labour — 3hrs', price: 900 }], photos: [], slips: [], history: [{ time: '10 Mar 2026 09:00', note: 'Job booked' }, { time: '15 Mar 2026 14:00', note: 'Status changed to Invoice & Collection' }] },
+  { id: 1, number: 'JB11152', client: 'John Wick', phone: '0821234567', description: 'Engine misfire on startup', jobType: 'CAR/BAKKIE', vehicleMake: 'Opel', vehicleModel: 'Corsa', registration: 'ABC123GP', start: '16 Mar 2026 08:00', due: '23 Mar 2026', status: 'wip', technician: 'Blaine', notes: 'Check spark plugs and coil packs first.', photos: [], slips: [], history: [{ time: '16 Mar 2026 08:00', note: 'Job booked by Blaine' }, { time: '16 Mar 2026 09:00', note: 'Status changed to In Progress' }] },
+  { id: 2, number: 'JB11153', client: 'Peter Smith', phone: '0837654321', description: 'Service and brake pads', jobType: 'CAR/BAKKIE', vehicleMake: 'VW', vehicleModel: 'Golf', registration: 'DEF456GP', start: '16 Mar 2026 09:30', due: '17 Mar 2026', status: 'new', technician: 'Technician 2', notes: '', photos: [], slips: [], history: [{ time: '16 Mar 2026 09:30', note: 'Job booked by Blaine' }] },
+  { id: 3, number: 'JB11154', client: 'Mike Jones', phone: '0849876543', description: 'Not starting — quote first', jobType: 'LAWNMOWER', vehicleMake: '', vehicleModel: '', registration: '', start: '16 Mar 2026 10:00', due: '23 Mar 2026', status: 'quoting', technician: 'Blaine', notes: 'Client wants quote before proceeding.', photos: [], slips: [], history: [{ time: '16 Mar 2026 10:00', note: 'Job booked by Blaine' }] },
+  { id: 4, number: 'JB11155', client: 'Sarah Brown', phone: '0851112233', description: 'Full service and blade sharpen', jobType: 'CHAINSAW/POLE SAW', vehicleMake: '', vehicleModel: '', registration: '', start: '12 Mar 2026 11:00', due: '19 Mar 2026', status: 'completed', technician: 'Technician 2', notes: '', photos: [], slips: [], history: [{ time: '12 Mar 2026 11:00', note: 'Job booked' }, { time: '13 Mar 2026 09:00', note: 'Status changed to Completed' }] },
+  { id: 5, number: 'JB11156', client: 'Dave Wilson', phone: '0829998877', description: 'Carb clean and tune', jobType: 'BRUSHCUTTER/WEEDEATER', vehicleMake: '', vehicleModel: '', registration: '', start: '11 Mar 2026 14:00', due: '18 Mar 2026', status: 'testing', technician: 'Blaine', notes: '', photos: [], slips: [], history: [{ time: '11 Mar 2026 14:00', note: 'Job booked' }] },
+  { id: 6, number: 'JB11157', client: 'Lisa Taylor', phone: '0834445566', description: 'Starter motor replacement', jobType: 'GENERATOR', vehicleMake: '', vehicleModel: '', registration: '', start: '10 Mar 2026 09:00', due: '17 Mar 2026', status: 'invoice', technician: 'Technician 2', notes: '', photos: [], slips: [], history: [{ time: '10 Mar 2026 09:00', note: 'Job booked' }, { time: '15 Mar 2026 14:00', note: 'Status changed to Invoice & Collection' }] },
 ];
 
 const SAMPLE_CLIENTS = [
@@ -118,22 +141,13 @@ function JobsList({ setPage, setSelectedJob }) {
         <span className="job-count">{filtered.length} jobs</span>
       </div>
       <div className="search-row">
-        <input
-          className="search-input"
-          placeholder="🔍 Search job, client, type..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <input className="search-input" placeholder="🔍 Search job, client, type..." value={search} onChange={e => setSearch(e.target.value)} />
         <button className="filter-btn" onClick={() => setShowFilter(!showFilter)}>⚙ Filter</button>
       </div>
       {showFilter && (
         <div className="filter-options">
           {['all', 'new', 'wip', 'quoting', 'completed', 'testing', 'invoice'].map(f => (
-            <button
-              key={f}
-              className={`filter-option ${filter === f ? 'active' : ''}`}
-              onClick={() => { setFilter(f); setShowFilter(false); }}
-            >
+            <button key={f} className={`filter-option ${filter === f ? 'active' : ''}`} onClick={() => { setFilter(f); setShowFilter(false); }}>
               {f === 'all' ? 'All Jobs' : STATUS[f].label}
             </button>
           ))}
@@ -177,11 +191,20 @@ function JobsList({ setPage, setSelectedJob }) {
 }
 
 function JobDetail({ setPage, job }) {
+  const isVehicle = VEHICLE_JOB_TYPES.includes(job.jobType);
+  const labourRate = isVehicle ? DEFAULT_SETTINGS.labourRateVehicle : DEFAULT_SETTINGS.labourRateOther;
+  const sundriesRate = isVehicle ? DEFAULT_SETTINGS.sundriesVehicle : DEFAULT_SETTINGS.sundriesOther;
+  const sundriesLabel = isVehicle ? 'Vehicle Sundries' : 'Machine Sundries';
+
   const [status, setStatus] = useState(job.status);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [parts, setParts] = useState(job.parts);
-  const [newPart, setNewPart] = useState('');
-  const [newPartPrice, setNewPartPrice] = useState('');
+  const [labourHours, setLabourHours] = useState(1);
+  const [sundriesAmount, setSundriesAmount] = useState(sundriesRate);
+  const [parts, setParts] = useState([]);
+  const [partSearch, setPartSearch] = useState('');
+  const [showPartDropdown, setShowPartDropdown] = useState(false);
+  const [manualPart, setManualPart] = useState('');
+  const [manualPrice, setManualPrice] = useState('');
   const [notes, setNotes] = useState(job.notes);
   const [showSlips, setShowSlips] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -191,13 +214,25 @@ function JobDetail({ setPage, job }) {
   const [listening, setListening] = useState(false);
   const cameraRef = useRef(null);
 
-  const totalParts = parts.reduce((sum, p) => sum + p.price, 0);
+  const labourTotal = labourHours * labourRate;
+  const partsTotal = parts.reduce((sum, p) => sum + p.price, 0);
+  const grandTotal = labourTotal + sundriesAmount + partsTotal;
 
-  const addPart = () => {
-    if (!newPart || !newPartPrice) return;
-    setParts(prev => [...prev, { id: Date.now(), name: newPart, price: parseFloat(newPartPrice) }]);
-    setNewPart('');
-    setNewPartPrice('');
+  const filteredInventory = SAMPLE_INVENTORY.filter(i =>
+    i.name.toLowerCase().includes(partSearch.toLowerCase())
+  );
+
+  const addFromInventory = (item) => {
+    setParts(prev => [...prev, { id: Date.now(), name: item.name, price: item.price, fromInventory: true }]);
+    setPartSearch('');
+    setShowPartDropdown(false);
+  };
+
+  const addManualPart = () => {
+    if (!manualPart || !manualPrice) return;
+    setParts(prev => [...prev, { id: Date.now(), name: manualPart, price: parseFloat(manualPrice), fromInventory: false }]);
+    setManualPart('');
+    setManualPrice('');
   };
 
   const removePart = (id) => setParts(prev => prev.filter(p => p.id !== id));
@@ -242,50 +277,28 @@ function JobDetail({ setPage, job }) {
       <div className="jobdetail-body">
 
         <div className="detail-section">
-          <div className="detail-row">
-            <span className="detail-label">Phone</span>
-            <span className="detail-value">{job.phone}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Job Type</span>
-            <span className="detail-value">{job.jobType}</span>
-          </div>
+          <div className="detail-row"><span className="detail-label">Phone</span><span className="detail-value">{job.phone}</span></div>
+          <div className="detail-row"><span className="detail-label">Job Type</span><span className="detail-value">{job.jobType}</span></div>
           {job.vehicleMake && (
-            <div className="detail-row">
-              <span className="detail-label">Vehicle</span>
-              <span className="detail-value">{job.vehicleMake} {job.vehicleModel} — {job.registration}</span>
-            </div>
+            <div className="detail-row"><span className="detail-label">Vehicle</span><span className="detail-value">{job.vehicleMake} {job.vehicleModel} — {job.registration}</span></div>
           )}
-          <div className="detail-row">
-            <span className="detail-label">Problem</span>
-            <span className="detail-value">{job.description}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Technician</span>
-            <span className="detail-value">{job.technician}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Due</span>
-            <span className="detail-value">{job.due}</span>
-          </div>
+          <div className="detail-row"><span className="detail-label">Problem</span><span className="detail-value">{job.description}</span></div>
+          <div className="detail-row"><span className="detail-label">Technician</span><span className="detail-value">{job.technician}</span></div>
+          <div className="detail-row"><span className="detail-label">Due</span><span className="detail-value">{job.due}</span></div>
         </div>
 
         <div className="detail-section">
           <div className="section-row">
             <h3 className="section-title">Change Status</h3>
-            <button className="toggle-btn" onClick={() => setShowStatusMenu(!showStatusMenu)}>
-              {showStatusMenu ? '▲' : '▼'}
-            </button>
+            <button className="toggle-btn" onClick={() => setShowStatusMenu(!showStatusMenu)}>{showStatusMenu ? '▲' : '▼'}</button>
           </div>
           {showStatusMenu && (
             <div className="status-grid">
               {Object.entries(STATUS).map(([key, val]) => (
-                <button
-                  key={key}
+                <button key={key}
                   className={`status-option ${status === key ? 'active' : ''}`}
                   style={{ borderColor: val.color, background: status === key ? val.color : 'transparent' }}
-                  onClick={() => { setStatus(key); setShowStatusMenu(false); }}
-                >
+                  onClick={() => { setStatus(key); setShowStatusMenu(false); }}>
                   {val.label}
                 </button>
               ))}
@@ -294,25 +307,74 @@ function JobDetail({ setPage, job }) {
         </div>
 
         <div className="detail-section">
-          <h3 className="section-title">Parts & Labour</h3>
+          <h3 className="section-title" style={{ marginBottom: '12px' }}>Parts & Labour</h3>
+
+          <div className="part-row fixed-row">
+            <span className="part-name">⏱ Labour</span>
+            <div className="labour-controls">
+              <button className="qty-btn" onClick={() => setLabourHours(h => Math.max(0.5, parseFloat((h - 0.5).toFixed(1))))}>−</button>
+              <span className="labour-hours">{labourHours}h @ R{labourRate}/hr</span>
+              <button className="qty-btn" onClick={() => setLabourHours(h => parseFloat((h + 0.5).toFixed(1)))}>+</button>
+            </div>
+            <span className="part-price">R{labourTotal.toFixed(2)}</span>
+          </div>
+
+          <div className="part-row fixed-row">
+            <span className="part-name">🔧 {sundriesLabel}</span>
+            <input
+              className="sundries-input"
+              type="number"
+              value={sundriesAmount}
+              onChange={e => setSundriesAmount(parseFloat(e.target.value) || 0)}
+            />
+            <span className="part-price">R{sundriesAmount.toFixed(2)}</span>
+          </div>
+
+          <div className="parts-divider">Additional Parts</div>
+
+          <div className="part-search-row">
+            <div className="part-search-wrapper">
+              <input
+                className="form-input"
+                placeholder="🔍 Search inventory..."
+                value={partSearch}
+                onChange={e => { setPartSearch(e.target.value); setShowPartDropdown(true); }}
+                onFocus={() => setShowPartDropdown(true)}
+              />
+              {showPartDropdown && partSearch && (
+                <div className="part-dropdown">
+                  {filteredInventory.length === 0 && <div className="part-dropdown-item">No items found</div>}
+                  {filteredInventory.map(item => (
+                    <div key={item.id} className="part-dropdown-item" onClick={() => addFromInventory(item)}>
+                      <span>{item.name}</span>
+                      <span className="dropdown-price">R{item.price.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="add-part-row">
+            <input className="form-input part-input" placeholder="Manual part description" value={manualPart} onChange={e => setManualPart(e.target.value)} />
+            <input className="form-input price-input" placeholder="Price" type="number" value={manualPrice} onChange={e => setManualPrice(e.target.value)} />
+            <button className="add-part-btn" onClick={addManualPart}>+</button>
+          </div>
+
           <div className="parts-list">
-            {parts.length === 0 && <p className="no-parts">No parts added yet</p>}
+            {parts.length === 0 && <p className="no-parts">No additional parts added</p>}
             {parts.map(p => (
               <div key={p.id} className="part-row">
-                <span className="part-name">{p.name}</span>
+                <span className="part-name">{p.fromInventory ? '📦' : '✏️'} {p.name}</span>
                 <span className="part-price">R{p.price.toFixed(2)}</span>
                 <button className="remove-part" onClick={() => removePart(p.id)}>✕</button>
               </div>
             ))}
           </div>
-          <div className="add-part-row">
-            <input className="form-input part-input" placeholder="Part or labour description" value={newPart} onChange={e => setNewPart(e.target.value)} />
-            <input className="form-input price-input" placeholder="Price" type="number" value={newPartPrice} onChange={e => setNewPartPrice(e.target.value)} />
-            <button className="add-part-btn" onClick={addPart}>+</button>
-          </div>
+
           <div className="parts-total">
-            <span>Total</span>
-            <span>R{totalParts.toFixed(2)}</span>
+            <span>Grand Total</span>
+            <span>R{grandTotal.toFixed(2)}</span>
           </div>
         </div>
 
@@ -323,13 +385,7 @@ function JobDetail({ setPage, job }) {
               {listening ? '🔴 Listening...' : '🎤 Voice'}
             </button>
           </div>
-          <textarea
-            className="form-input"
-            rows={3}
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Add notes here or use voice..."
-          />
+          <textarea className="form-input" rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add notes here or use voice..." />
         </div>
 
         <div className="detail-section collapsible">
@@ -354,19 +410,11 @@ function JobDetail({ setPage, job }) {
             <div className="ai-chat">
               <div className="ai-messages">
                 {aiMessages.map((m, i) => (
-                  <div key={i} className={`ai-message ${m.role}`}>
-                    <span>{m.text}</span>
-                  </div>
+                  <div key={i} className={`ai-message ${m.role}`}><span>{m.text}</span></div>
                 ))}
               </div>
               <div className="ai-input-row">
-                <input
-                  className="form-input"
-                  placeholder="Ask a repair question..."
-                  value={aiInput}
-                  onChange={e => setAiInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendAIMessage()}
-                />
+                <input className="form-input" placeholder="Ask a repair question..." value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendAIMessage()} />
                 <button className="add-part-btn" onClick={sendAIMessage}>➤</button>
               </div>
             </div>
@@ -391,7 +439,6 @@ function JobDetail({ setPage, job }) {
         </div>
 
         <div style={{ height: '80px' }}></div>
-
       </div>
 
       <div className="bottom-bar">
@@ -403,12 +450,11 @@ function JobDetail({ setPage, job }) {
         <button className="bottom-btn">🧾 Invoice</button>
         <button className="bottom-btn whatsapp-btn">💬 WhatsApp</button>
       </div>
-
     </div>
   );
 }
 
-function SignaturePage({ setPage, jobData }) {
+function SignaturePage({ setPage }) {
   const canvasRef = useRef(null);
   const [drawing, setDrawing] = useState(false);
   const [signed, setSigned] = useState(false);
@@ -464,18 +510,8 @@ function SignaturePage({ setPage, jobData }) {
       </div>
       <div className="form-body">
         <div className="form-section">
-          <div className="job-ref-row">
-            <span className="job-ref-label">Job Number</span>
-            <span className="job-ref-value">JB11158</span>
-          </div>
-          <div className="job-ref-row">
-            <span className="job-ref-label">Client</span>
-            <span className="job-ref-value">{jobData?.clientName || 'Client Name'}</span>
-          </div>
-          <div className="job-ref-row">
-            <span className="job-ref-label">Date & Time</span>
-            <span className="job-ref-value">{now.toLocaleString('en-ZA')}</span>
-          </div>
+          <div className="job-ref-row"><span className="job-ref-label">Job Number</span><span className="job-ref-value">JB11158</span></div>
+          <div className="job-ref-row"><span className="job-ref-label">Date & Time</span><span className="job-ref-value">{now.toLocaleString('en-ZA')}</span></div>
         </div>
         <div className="form-section">
           <h3 className="section-title">Terms & Conditions</h3>
@@ -492,18 +528,9 @@ function SignaturePage({ setPage, jobData }) {
           <h3 className="section-title">Client Signature</h3>
           <p className="sig-instruction">By signing below you agree to the above terms and conditions.</p>
           <div className="canvas-wrapper">
-            <canvas
-              ref={canvasRef}
-              width={340}
-              height={150}
-              className="sig-canvas"
-              onMouseDown={startDraw}
-              onMouseMove={draw}
-              onMouseUp={stopDraw}
-              onTouchStart={startDraw}
-              onTouchMove={draw}
-              onTouchEnd={stopDraw}
-            />
+            <canvas ref={canvasRef} width={340} height={150} className="sig-canvas"
+              onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw}
+              onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
           </div>
           <button className="clear-btn" onClick={clearSignature}>Clear Signature</button>
         </div>
@@ -564,10 +591,8 @@ function NewJobCard({ setPage }) {
         <div className="form-section">
           <h3 className="section-title">Client</h3>
           <div className="field">
-            <input className="form-input" placeholder="🔍 Search client name or phone..."
-              value={clientSearch}
-              onChange={e => { setClientSearch(e.target.value); setShowClientResults(true); setSelectedClient(null); }}
-            />
+            <input className="form-input" placeholder="🔍 Search client name or phone..." value={clientSearch}
+              onChange={e => { setClientSearch(e.target.value); setShowClientResults(true); setSelectedClient(null); }} />
             {errors.client && <span className="error">{errors.client}</span>}
             {showClientResults && clientSearch && (
               <div className="client-results">
@@ -657,7 +682,7 @@ function App() {
       {page === 'jobs' && <JobsList setPage={setPage} setSelectedJob={setSelectedJob} />}
       {page === 'jobdetail' && selectedJob && <JobDetail setPage={setPage} job={selectedJob} />}
       {page === 'newjob' && <NewJobCard setPage={setPage} />}
-      {page === 'signature' && <SignaturePage setPage={setPage} jobData={null} />}
+      {page === 'signature' && <SignaturePage setPage={setPage} />}
       {page === 'quotes' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Quotes — Coming Soon</h2></div>}
       {page === 'invoices' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Invoices — Coming Soon</h2></div>}
       {page === 'clients' && <div className="coming-soon"><button className="back-btn" onClick={() => setPage('dashboard')}>← Back</button><h2>Clients — Coming Soon</h2></div>}
