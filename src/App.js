@@ -1169,7 +1169,6 @@ function NewJobCard({
     if (jobType === 'CAR/BAKKIE' && !vehicleMake) newErrors.vehicleMake = 'Please enter vehicle make';
     if (jobType === 'CAR/BAKKIE' && !registration) newErrors.registration = 'Please enter registration';
     if (selectedProblems.length === 0 && !notes.trim()) newErrors.problems = 'Please select a problem or add notes';
-    if (!technician) newErrors.technician = 'Please assign a technician';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1196,7 +1195,7 @@ function NewJobCard({
             jobHistory: [],
           },
       job: {
-        id: Date.now(),
+        id: undefined,
         number: nextJobNumber,
         client: isExistingClient ? selectedClient.name : (selectedClient?.name || clientSearch.trim()),
         phone: isExistingClient ? selectedClient.phone : (selectedClient?.phone || ''),
@@ -1381,6 +1380,8 @@ function SignaturePage({
   setJobs,
   setClients,
   clients,
+  setSelectedJob,
+  
 }) {
   const canvasRef = useRef(null);
   const [drawing, setDrawing] = useState(false);
@@ -1502,7 +1503,8 @@ function SignaturePage({
       setJobs((prev) => [mappedJob, ...prev]);
       setDraftJob(null);
       alert('Job card created successfully.');
-      setPage('jobs');
+      setSelectedJob(mappedJob);
+      setPage('jobdetail');
     } catch (error) {
       console.error(error);
       alert('Failed to save job card.');
@@ -2099,6 +2101,7 @@ function App() {
           setJobs={setJobs}
           setClients={setClients}
           clients={clients}
+          setSelectedJob={setSelectedJob}
         />
       )}
       {page === 'clients' && <ClientsList setPage={setPage} clients={clients} setClients={setClients} setSelectedClient={setSelectedClient} />}
