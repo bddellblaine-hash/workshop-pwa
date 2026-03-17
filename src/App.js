@@ -782,13 +782,14 @@ function InventoryScreen({ setPage, inventory, setInventory }) {
   );
 }
 
-function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvoiceType, inventory = [], setJobs }) {
+function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvoiceType, inventory = [], setJobs, technicians = [] }) {
   const isVehicle = VEHICLE_JOB_TYPES.includes(job.jobType);
   const labourRate = isVehicle ? settings.labourRateVehicle : settings.labourRateOther;
   const sundriesRate = isVehicle ? settings.sundriesVehicle : settings.sundriesOther;
   const sundriesLabel = isVehicle ? 'Vehicle Sundries' : 'Machine Sundries';
 
   const [status, setStatus] = useState(job.status);
+  const [technician, setTechnician] = useState(job.technician || '');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [labourHours, setLabourHours] = useState(job.labourHours || 1);
   const [sundriesAmount, setSundriesAmount] = useState(job.sundriesAmount || sundriesRate);
@@ -814,7 +815,24 @@ function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvo
   const filteredInventory = (inventory || []).filter((i) =>
     i.name.toLowerCase().includes(partSearch.toLowerCase())
   );
-
+useEffect(() => {
+  const timer = setTimeout(async () => {
+    if (!job.id) return;
+    try {
+      await db.saveJob({
+        ...job,
+        status,
+        labourHours,
+        sundriesAmount,
+        parts,
+        notes,
+      });
+    } catch (error) {
+      console.error('Auto save failed:', error);
+    }
+  }, 2000);
+  return () => clearTimeout(timer);
+}, [status, labourHours, sundriesAmount, parts, notes]); // eslint-disable-line
   const addFromInventory = (item) => {
     setParts((prev) => [...prev, { id: Date.now(), name: item.name, price: item.sellingPrice, fromInventory: true }]);
     setPartSearch('');
@@ -868,10 +886,15 @@ function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvo
 
   const saveJobChanges = async () => {
     setSaving(true);
+    if (!technician) {
+  alert('Please assign a technician before saving.');
+  return;
+}
     try {
       const updated = {
         ...job,
         status,
+        technician,
         labourHours,
         sundriesAmount,
         parts,
@@ -879,6 +902,7 @@ function JobDetail({ setPage, job, settings, quickParts, setSelectedJob, setInvo
       };
 
       const saved = await db.saveJob(updated);
+      
 
       const mapped = {
         id: saved.id,
@@ -1147,7 +1171,6 @@ function NewJobCard({
   const [registration, setRegistration] = useState('');
   const [selectedProblems, setSelectedProblems] = useState([]);
   const [notes, setNotes] = useState('');
-  const [technician, setTechnician] = useState('');
   const [dueDate, setDueDate] = useState(formatDate(defaultDue));
   const [errors, setErrors] = useState({});
 
@@ -1208,7 +1231,7 @@ function NewJobCard({
         start: new Date().toLocaleString('en-ZA'),
         due: dueDate,
         status: 'new',
-        technician,
+        technician: '',
         notes: notes.trim(),
         history: [{ time: new Date().toLocaleString('en-ZA'), note: 'Job booked' }],
         parts: [],
@@ -1345,17 +1368,6 @@ function NewJobCard({
           {errors.problems && <span className="error">{errors.problems}</span>}
           <div className="field" style={{ marginTop: '12px' }}>
             <textarea className="form-input" placeholder="Additional notes..." rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3 className="section-title">Technician</h3>
-          <div className="field">
-            <select className="form-input" value={technician} onChange={(e) => setTechnician(e.target.value)}>
-              <option value="">Assign technician...</option>
-              {technicians.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {errors.technician && <span className="error">{errors.technician}</span>}
           </div>
         </div>
 
@@ -1935,6 +1947,7 @@ function App() {
   const [quotes, setQuotes] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pageHistory, setPageHistory] = useState(['dashboard']);
 
   useEffect(() => {
     loadAllData();
@@ -2044,6 +2057,20 @@ function App() {
     }
   };
 
+  const navigateTo = (nextPage) => {
+    setPageHistory((prev) => [...prev, nextPage]);
+    setPage(nextPage);
+  };
+
+  const goBack = () => {
+    setPageHistory((prev) => {
+      if (prev.length <= 1) return prev;
+      const newHistory = prev.slice(0, -1);
+      setPage(newHistory[newHistory.length - 1]);
+      return newHistory;
+    });
+  };
+
   if (loading) {
     return (
       <div className="app">
@@ -2051,7 +2078,16 @@ function App() {
           <h1>{INITIAL_SETTINGS.companyName}</h1>
           <p>Job Management System</p>
         </header>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', flexDirection: 'column', gap: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '60vh',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
           <div className="loading-spinner"></div>
           <p style={{ color: '#888' }}>Loading your workshop data...</p>
         </div>
@@ -2066,11 +2102,19 @@ function App() {
         <p>Job Management System</p>
       </header>
 
-      {page === 'dashboard' && <Dashboard setPage={setPage} />}
-      {page === 'jobs' && <JobsList setPage={setPage} setSelectedJob={setSelectedJob} jobs={jobs} />}
+      {page === 'dashboard' && <Dashboard setPage={navigateTo} />}
+
+      {page === 'jobs' && (
+        <JobsList
+          setPage={navigateTo}
+          setSelectedJob={setSelectedJob}
+          jobs={jobs}
+        />
+      )}
+
       {page === 'jobdetail' && selectedJob && (
         <JobDetail
-          setPage={setPage}
+          setPage={navigateTo}
           job={selectedJob}
           settings={settings}
           quickParts={quickParts}
@@ -2078,12 +2122,22 @@ function App() {
           setInvoiceType={setInvoiceType}
           inventory={inventory}
           setJobs={setJobs}
+          technicians={technicians}
         />
       )}
-      {page === 'invoiceview' && selectedJob && <InvoiceView setPage={setPage} job={selectedJob} settings={settings} type={invoiceType} />}
+
+      {page === 'invoiceview' && selectedJob && (
+        <InvoiceView
+          setPage={navigateTo}
+          job={selectedJob}
+          settings={settings}
+          type={invoiceType}
+        />
+      )}
+
       {page === 'newjob' && (
         <NewJobCard
-          setPage={setPage}
+          setPage={navigateTo}
           settings={settings}
           jobTypes={jobTypes}
           technicians={technicians}
@@ -2093,9 +2147,10 @@ function App() {
           jobs={jobs}
         />
       )}
+
       {page === 'signature' && (
         <SignaturePage
-          setPage={setPage}
+          setPage={navigateTo}
           draftJob={draftJob}
           setDraftJob={setDraftJob}
           setJobs={setJobs}
@@ -2104,14 +2159,56 @@ function App() {
           setSelectedJob={setSelectedJob}
         />
       )}
-      {page === 'clients' && <ClientsList setPage={setPage} clients={clients} setClients={setClients} setSelectedClient={setSelectedClient} />}
-      {page === 'clientdetail' && selectedClient && <ClientDetail setPage={setPage} client={selectedClient} setClients={setClients} jobs={jobs} />}
-      {page === 'inventory' && <InventoryScreen setPage={setPage} inventory={inventory} setInventory={setInventory} />}
-      {page === 'invoices' && <InvoicesScreen setPage={setPage} invoices={invoices} setInvoices={setInvoices} settings={settings} />}
-      {page === 'quotes' && <QuotesScreen setPage={setPage} quotes={quotes} setQuotes={setQuotes} setInvoices={setInvoices} invoices={invoices} settings={settings} />}
+
+      {page === 'clients' && (
+        <ClientsList
+          setPage={navigateTo}
+          clients={clients}
+          setClients={setClients}
+          setSelectedClient={setSelectedClient}
+        />
+      )}
+
+      {page === 'clientdetail' && selectedClient && (
+        <ClientDetail
+          setPage={navigateTo}
+          client={selectedClient}
+          setClients={setClients}
+          jobs={jobs}
+        />
+      )}
+
+      {page === 'inventory' && (
+        <InventoryScreen
+          setPage={navigateTo}
+          inventory={inventory}
+          setInventory={setInventory}
+        />
+      )}
+
+      {page === 'invoices' && (
+        <InvoicesScreen
+          setPage={navigateTo}
+          invoices={invoices}
+          setInvoices={setInvoices}
+          settings={settings}
+        />
+      )}
+
+      {page === 'quotes' && (
+        <QuotesScreen
+          setPage={navigateTo}
+          quotes={quotes}
+          setQuotes={setQuotes}
+          setInvoices={setInvoices}
+          invoices={invoices}
+          settings={settings}
+        />
+      )}
+
       {page === 'settings' && (
         <SettingsScreen
-          setPage={setPage}
+          setPage={navigateTo}
           settings={settings}
           setSettings={setSettings}
           jobTypes={jobTypes}
@@ -2127,5 +2224,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
